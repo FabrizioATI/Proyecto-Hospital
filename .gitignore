@@ -27,3 +27,5 @@ db.sqlite3
 # Archivos de sistema
 .DS_Store
 Thumbs.db
+/.vs
+/app/migrations
