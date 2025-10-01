@@ -46,7 +46,7 @@ class Especialidad(models.Model):
 class DoctorDetalle(models.Model):
     entidad = models.ForeignKey(Entidad, on_delete=models.CASCADE)  # Solo si tiene rol doctor
     especialidad = models.ForeignKey(Especialidad, on_delete=models.CASCADE)
-    nro_colegiatura = models.CharField(max_length=50)
+    nro_colegiatura = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return f"Dr. {self.entidad.nombre} ({self.especialidad.nombre})"
