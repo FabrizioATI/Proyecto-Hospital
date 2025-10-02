@@ -1,118 +1,170 @@
-{% extends 'layouts/base-fullscreen.html' %}
+{% extends 'accounts/baseregister.html' %}
 
-{% block title %} Register {% endblock title %}
-
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %}Página de Registro{% endblock title %}
 
 {% block content %}
+<div class="card shadow-lg mx-auto mt-5" style="max-width: 34rem;">
+  <div class="card-body p-4">
+    <h1 class="fs-4 card-title fw-bold mb-3 text-center">Registro</h1>
 
-    <!-- Page content -->
-    <div class="container mt--8 pb-5">
-      <!-- Table -->
-      <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-        
-          <div class="card bg-secondary shadow border-0">
-            <div class="card-header bg-transparent pb-5">
-              <div class="text-muted text-center mt-2 mb-4">
-                Sign UP
-              </div>
+    <form method="POST" class="needs-validation" novalidate="" autocomplete="off" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if messages %}
+        {% for message in messages %}
+          {% if 'success' in message.tags %}
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="card-body px-lg-5 py-lg-5">
-              <div class="text-center text-muted mb-4">
-
-                {% if msg %}
-                  <small>{{ msg | safe }}</small>
-                {% else %}
-                  Add your credentials
-                {% endif %}  
-              
-              </div>
-
-              {% if not success %}
-
-                <form method="POST">
-
-                  {% csrf_token %}
-            
-                  <div class="form-group">
-                    <div class="input-group input-group-alternative mb-3">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="ni ni-hat-3"></i></span>
-                      </div>
-                      {{ form.username }}
-                    </div>
-                  </div>
-                  <span class="text-error">{{ form.username.errors }}</span>
-
-                  <div class="form-group">
-                    <div class="input-group input-group-alternative mb-3">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="ni ni-email-83"></i></span>
-                      </div>
-                      {{ form.email }}
-                    </div>
-                  </div>
-                  <span class="text-error">{{ form.email.errors }}</span>
-
-                  <div class="form-group">
-                    <div class="input-group input-group-alternative">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
-                      </div>
-                      {{ form.password1 }}
-                    </div>
-                  </div>
-                  <span class="text-error">{{ form.password1.errors }}</span>
-
-                  <div class="form-group">
-                    <div class="input-group input-group-alternative">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
-                      </div>
-                      {{ form.password2 }}
-                    </div>
-                  </div>
-                  <span class="text-error">{{ form.password2.errors }}</span>
-
-                  <div class="row my-4">
-                    <div class="col-12">
-                      <div class="custom-control custom-control-alternative custom-checkbox">
-                        <input class="custom-control-input" id="customCheckRegister" type="checkbox">
-                        <label class="custom-control-label" for="customCheckRegister">
-                          <span class="text-muted">I agree with the <a href="#!">Privacy Policy</a></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-primary mt-4">Create account</button>
-                  </div>
-                </form>
-
-              {% endif %}  
-  
+          {% else %}
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-          </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
 
-        </div>
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="user_status">Elige tu rol :</label>
+        <select class="form-select" name="user_config" id="user_status">
+          <option value="Doctor" {% if user_config == 'Doctor' %}selected{% endif %}>Doctor</option>
+          <option value="Patient" {% if user_config == 'Patient' %}selected{% endif %}>Paciente</option>
+        </select>
       </div>
 
-      <div class="row mt-3">
-        <div class="col-3"></div>
-        <div class="col-3">
-          
-        </div>
-        <div class="col-3 text-right">
-          <a href="https://appseed.us/support" class="text-light"><small>Get Support</small></a>
-        </div>
+      <div id="specialty_block" class="mb-3" style="display: {% if user_config == 'Doctor' %}block{% else %}none{% endif %}">
+        <label class="mb-2 text-muted" for="specialty">Especialidad</label>
+        <select name="Speciality" class="form-select" id="">
+          {% for speciality in specialities %}
+          <option value="{{speciality.name}}">{{speciality.name}}</option>
+          {%endfor%}
+        </select>
+        <div class="invalid-feedback">La especialidad es obligatoria para los doctores</div>
+      </div>
+      
+      <div id="bio_block" class="mb-3" style="display: {% if user_config == 'Doctor' %}block{% else %}none{% endif %}">
+          <label class="mb-2 text-muted" for="bio">Biografía</label>
+          <textarea id="bio" class="form-control" name="bio" {% if user_config == 'Doctor' %}required{% endif %}></textarea>
+          <div class="invalid-feedback">La biografía es obligatoria para los doctores</div>
+      </div>
+      
+      <div id="insurance_block" class="mb-3" style="display: {% if user_config == 'Patient' %}block{% else %}none{% endif %}">
+          <label class="mb-2 text-muted" for="insurance">Seguro</label>
+          <input id="insurance" type="text" class="form-control" name="insurance" {% if user_config == 'Patient' %}required{% endif %} />
+          <div class="invalid-feedback">El seguro es obligatorio para los pacientes</div>
       </div>
 
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="id_user">Nombre de Usuario</label>
+        <input id="id_user" type="text" class="form-control" name="user_id" value="{{ user_id }}" required autofocus />
+        <div class="invalid-feedback">El nombre de usuario es obligatorio</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="first_name">Nombre</label>
+        <input id="first_name" type="text" class="form-control" name="user_firstname" value="{{ user_firstname }}" required autofocus />
+        <div class="invalid-feedback">El nombre es obligatorio</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="last_name">Apellido</label>
+        <input id="last_name" type="text" class="form-control" name="user_lastname" value="{{ user_lastname }}" required autofocus />
+        <div class="invalid-feedback">El apellido es obligatorio</div>
+      </div>
+      
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="select_gender">Género</label>
+        <select class="form-select" aria-label="Default select example" name="user_gender" id="select_gender">
+          <option value="Male" {% if user_gender == 'Male' %}selected{% endif %}>Masculino</option>
+          <option value="Female" {% if user_gender == 'Female' %}selected{% endif %}>Femenino</option>
+        </select>
+      </div>   
+      
+      <div class="mb-3" >
+        <label class="mb-2 text-muted" for="birthday">Fecha de Nacimiento</label>
+        <input id="birthday" type="date" class="form-control" name="birthday" value="{{ birthday }}" required />
+        <div class="invalid-feedback">La fecha de nacimiento no es válida</div>
+      </div>
+      
+      <div class="mb-3" >
+        <label class="mb-2 text-muted" for="email">Correo Electrónico</label>
+        <input id="email" type="email" class="form-control" name="email" value="{{ email }}" required />
+        <div class="invalid-feedback">El correo electrónico no es válido</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="password">Contraseña</label>
+        <input id="password" type="password" class="form-control" name="password" required />
+        <div class="invalid-feedback">La contraseña es obligatoria</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="conf__password">Confirmar Contraseña</label>
+        <input id="conf__password" type="password" class="form-control" name="conf_password" required />
+        <div class="invalid-feedback">La confirmación de contraseña es obligatoria</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="mb-2 text-muted" for="AddressLine">Dirección</label>
+        <input id="AddressLine" type="text" class="form-control mb-2" name="address_line" value="{{ address_line }}" placeholder="Dirección" required autofocus />
+        <input id="Region" type="text" class="form-control mb-2" name="region" value="{{ region }}" placeholder="Región" required autofocus />
+        <input id="City" type="text" class="form-control mb-2" name="city" value="{{ city }}" placeholder="Ciudad" required autofocus />
+        <input id="Pincode" type="text" class="form-control" name="pincode" value="{{ pincode }}" placeholder="Código Postal" required autofocus />
+        <div class="invalid-feedback">La dirección es obligatoria</div>
+      </div>
+      
+      <div class="mb-3 col-12 col-md-12">
+        <label for="pic" class="form-label text-muted">Foto de Perfil</label>
+        <input type="file" class="form-control p-3"  name="profile_pic" id="pic"  required>
+      </div>
+
+      <p class="form-text text-muted mb-3">
+        Al registrarte aceptas nuestros términos y condiciones.
+      </p>
+
+      <div class="align-items-center d-flex">
+        <button type="submit" class="btn btn-primary ms-auto primary-color-background">
+          Registrarse
+        </button>
+      </div>
+    </form>
+  </div>
+  <div class="card-footer py-3 border-0">
+    <div class="text-center">
+      ¿Ya tienes una cuenta?
+      <a href="{% url 'login' %}" class="text-dark secondary-color">Iniciar Sesión</a>
     </div>
   </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    toggleFields();
+
+    document.getElementById('user_status').addEventListener('change', function() {
+      toggleFields();
+    });
+
+    function toggleFields() {
+      var userConfig = document.getElementById('user_status').value;
+      var specialtyBlock = document.getElementById('specialty_block');
+      var bioBlock = document.getElementById('bio_block');
+      var insuranceBlock = document.getElementById('insurance_block');
+
+      if (userConfig === 'Doctor') {
+        specialtyBlock.style.display = 'block';
+        bioBlock.style.display = 'block';
+        insuranceBlock.style.display = 'none';
+      } else if (userConfig === 'Patient') {
+        specialtyBlock.style.display = 'none';
+        bioBlock.style.display = 'none';
+        insuranceBlock.style.display = 'block';
+      }
+    }
+  });
+</script>
+
 
 {% endblock content %}
-
-<!-- Specific JS goes HERE --> 
-{% block javascripts %}{% endblock javascripts %}

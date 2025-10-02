@@ -10,13 +10,12 @@ def eliminar_medico(request, pk):
     doctor = get_object_or_404(DoctorDetalle, pk=pk)
     entidad = doctor.entidad
     doctor.delete()
-    entidad.delete()  # 👈 elimina también la entidad asociada
+    entidad.delete() 
     return redirect("lista_medicos")
 
 def registrar_medico(request):
     errors = {}
     if request.method == "POST":
-        # Datos de la Entidad
         nombre = request.POST.get("nombre")
         apellidoPaterno = request.POST.get("apellidoPaterno")
         apellidoMaterno = request.POST.get("apellidoMaterno")
@@ -28,7 +27,6 @@ def registrar_medico(request):
         especialidad_id = request.POST.get("especialidad")
         nro_colegiatura = request.POST.get("nro_colegiatura")
 
-        # 🔹 Validaciones
         if Entidad.objects.filter(dni=dni).exists():
             errors["dni"] = "Este DNI ya está registrado."
 
@@ -36,18 +34,16 @@ def registrar_medico(request):
             errors["nro_colegiatura"] = "Este número de colegiatura ya está registrado."
 
         if not errors:
-            # Crear entidad
             entidad = Entidad.objects.create(
                 nombre=nombre,
                 apellidoPaterno=apellidoPaterno,
                 apellidoMaterno=apellidoMaterno,
                 correo=correo,
-                contraseña=contraseña,  # lo ideal es usar hash
+                contraseña=contraseña,
                 telefono=telefono,
                 dni=dni,
             )
 
-            # Crear doctor
             especialidad = Especialidad.objects.get(id=especialidad_id)
             DoctorDetalle.objects.create(
                 entidad=entidad,
@@ -55,14 +51,12 @@ def registrar_medico(request):
                 nro_colegiatura=nro_colegiatura,
             )
 
-            # Asignar rol "doctor"
             rol_doctor, created = Rol.objects.get_or_create(nombre_rol="doctor")
             RolEntidad.objects.create(entidad=entidad, rol=rol_doctor)
 
             messages.success(request, "Médico registrado correctamente.")
             return redirect("lista_medicos")
 
-    # Si es GET o hubo errores
     especialidades = Especialidad.objects.all()
     return render(
         request,
@@ -78,7 +72,6 @@ def editar_medico(request, pk):
         dni = request.POST.get("dni")
         nro_colegiatura = request.POST.get("nro_colegiatura")
 
-        # 🔹 Validaciones (excluyendo al mismo doctor que estamos editando)
         if Entidad.objects.filter(dni=dni).exclude(id=doctor.entidad.id).exists():
             errors["dni"] = "Este DNI ya está registrado."
 
@@ -86,7 +79,6 @@ def editar_medico(request, pk):
             errors["nro_colegiatura"] = "Este número de colegiatura ya está registrado."
 
         if not errors:
-            # Actualizar entidad
             doctor.entidad.nombre = request.POST.get("nombre")
             doctor.entidad.apellidoPaterno = request.POST.get("apellidoPaterno")
             doctor.entidad.apellidoMaterno = request.POST.get("apellidoMaterno")
@@ -95,7 +87,6 @@ def editar_medico(request, pk):
             doctor.entidad.dni = dni
             doctor.entidad.save()
 
-            # Actualizar detalles del doctor
             especialidad_id = request.POST.get("especialidad")
             doctor.especialidad = Especialidad.objects.get(id=especialidad_id)
             doctor.nro_colegiatura = nro_colegiatura
@@ -110,3 +101,79 @@ def editar_medico(request, pk):
         "doctor/editar_medico.html",
         {"doctor": doctor, "especialidades": especialidades, "errors": errors},
     )
+
+def login(request):
+    return render(
+        request,
+        "accounts/login.html")
+def login2(request):
+    return render(
+        request,
+        "accounts/login2.html")
+
+def register(request):
+  if request.method == 'POST':
+    user_status = request.POST.get('user_config')
+    first_name = request.POST.get('user_firstname')
+    last_name = request.POST.get('user_lastname')
+    profile_pic = ""
+
+    if "profile_pic" in request.FILES:
+      profile_pic = request.FILES['profile_pic']
+
+    username = request.POST.get('user_id')
+    email = request.POST.get('email')
+    gender = request.POST.get('user_gender')
+    birthday = request.POST.get("birthday")
+    password = request.POST.get('password')
+    confirm_password = request.POST.get('conf_password')
+    address_line = request.POST.get('address_line')
+    region = request.POST.get('region')
+    city = request.POST.get('city')
+    pincode = request.POST.get('pincode')
+
+    if len(password) < 6:
+      messages.error(request, 'Password must be at least 6 characters long.')
+      return render(request, 'users/register.html', context={'user_config': user_status, 'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender, 'address_line': address_line, 'region': region, 'city': city, 'pincode': pincode})
+
+    if password != confirm_password:
+      messages.error(request, 'Passwords do not match.')
+      return render(request, 'users/register.html', context={'user_config': user_status, 'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender, 'address_line': address_line, 'region': region, 'city': city, 'pincode': pincode})
+
+    if Users.objects.filter(username=username).exists():
+      messages.error(request, 'Username already exists. Try again with a different username.')
+      return render(request, 'users/register.html', context={'user_config': user_status, 'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender, 'address_line': address_line, 'region': region, 'city': city, 'pincode': pincode})
+
+    address = Address.objects.create(address_line=address_line, region=region,city=city, code_postal=pincode)
+
+    user = Users.objects.create_user(
+      first_name=first_name,
+      last_name=last_name,
+      profile_avatar=profile_pic,
+      username=username,
+      email=email,
+      gender=gender,
+      birthday=birthday,
+      password=password,
+      id_address=address,
+      is_doctor=(user_status == 'Doctor')
+    )
+      
+    user.save()
+
+    if user_status == 'Doctor':
+      specialty = request.POST.get('Speciality')
+      specialty_name = Specialty.objects.get(name=specialty)
+      bio = request.POST.get('bio')
+      doctor = Doctors.objects.create(user=user, specialty=specialty_name, bio=bio)
+      doctor.save()
+        
+    elif user_status == 'Patient':
+        insurance = request.POST.get('insurance')
+        patient = Patients.objects.create(user=user, insurance=insurance)
+        patient.save()
+
+    messages.success(request, 'Your account has been successfully registered. Please login.', extra_tags='success')
+
+
+  return render(request, 'accounts/register.html')
