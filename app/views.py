@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad
+from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad, Horario, DoctorHorario
 
 def lista_medicos(request):
     medicos = DoctorDetalle.objects.select_related("entidad", "especialidad").all()
@@ -175,5 +175,32 @@ def register(request):
 
     messages.success(request, 'Your account has been successfully registered. Please login.', extra_tags='success')
 
-
   return render(request, 'accounts/register.html')
+
+def registrarHorarioMedico(request, pk):
+    doctor = get_object_or_404(DoctorDetalle, pk=pk)
+    errors = {}
+
+
+    doctor = get_object_or_404(DoctorDetalle, pk=doctor_id) if doctor_id else None
+    times = Horario.objects.all()
+
+    if request.method == "POST":
+        fecha = request.POST.get("date")
+        hora = request.POST.get("time")
+        # Buscar el horario por fecha y hora seleccionada
+        horario = Horario.objects.filter(fecha=fecha, hora_inicio=hora).first()
+        if not horario:
+            messages.error(request, "No existe un horario con esa fecha y hora.")
+        elif DoctorHorario.objects.filter(doctor=doctor, horario=horario).exists():
+            messages.error(request, "El médico ya tiene asignado ese horario.")
+        else:
+            DoctorHorario.objects.create(doctor=doctor, horario=horario)
+            messages.success(request, "Horario asignado correctamente.")
+            return redirect("horario_medicos")
+
+    context = {
+        "doc": doctor,
+        "times": times,
+    }
+    return render(request, "doctor/horario_medicos.html", context)
