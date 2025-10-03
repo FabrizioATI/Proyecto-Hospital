@@ -11,10 +11,19 @@
       <div class="collapse navbar-collapse" id="sidenav-collapse-main">
         <!-- Nav items -->
         <ul class="navbar-nav">
+          <!-- Médicos -->
           <li class="nav-item">
-            <a class="nav-link {% if 'medicos' in segment %} active {% endif %}" href="{% url 'lista_medicos' %}">
+            <a class="nav-link {% if segment == 'medicos' %} active {% endif %}" href="{% url 'lista_medicos' %}">
               <i class="ni ni-bullet-list-67 text-primary"></i>
               <span class="nav-link-text">Lista de Médicos</span>
+            </a>
+          </li>
+
+          <!-- Pacientes -->
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'pacientes' %} active {% endif %}" href="{% url 'lista_pacientes' %}">
+              <i class="ni ni-single-02 text-success"></i>
+              <span class="nav-link-text">Lista de Pacientes</span>
             </a>
           </li>
         </ul>
