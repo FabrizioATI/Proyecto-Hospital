@@ -13,8 +13,10 @@ SECRET_KEY = 'django-insecure-lj*+-4$_0h!imqr3&mi88mu&voq4lnb9f&hy^nj5^g0h7u_++m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
 
 # Application definition
 
@@ -27,6 +29,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app'
 ]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',             # respaldo por username/email si lo usas
+]
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'          # ajusta a tu vista
+LOGOUT_REDIRECT_URL = 'login'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

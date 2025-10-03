@@ -1,6 +1,10 @@
+from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad
+from django.contrib.auth import logout as django_logout 
+from .forms import LoginForm   
 
 def lista_medicos(request):
     medicos = DoctorDetalle.objects.select_related("entidad", "especialidad").all()
@@ -102,14 +106,25 @@ def editar_medico(request, pk):
         {"doctor": doctor, "especialidades": especialidades, "errors": errors},
     )
 
-def login(request):
-    return render(
-        request,
-        "accounts/login.html")
-def login2(request):
-    return render(
-        request,
-        "accounts/login2.html")
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    form = LoginForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        dni = form.cleaned_data['dni']
+        password = form.cleaned_data['password']
+        user = authenticate(request, username=dni, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, "¡Bienvenido!")
+            return redirect(request.GET.get('next') or 'home')
+        messages.error(request, "DNI o contraseña inválidos.")
+    return render(request, 'accounts/login.html', {'form': form})
+
+def logout_view(request):
+    django_logout(request)
+    return redirect('login')
 
 def register(request):
   if request.method == 'POST':
@@ -177,3 +192,7 @@ def register(request):
 
 
   return render(request, 'accounts/register.html')
+
+@login_required
+def home(request):
+    return render(request, 'home/index.html') 
