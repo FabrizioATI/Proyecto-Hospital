@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad
+from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad, DoctorHorario, Horario
 from django.contrib.auth import logout as django_logout 
 from .forms import LoginForm   
 
@@ -190,8 +190,30 @@ def register(request):
 
     messages.success(request, 'Your account has been successfully registered. Please login.', extra_tags='success')
 
-
   return render(request, 'accounts/register.html')
+
+def registrarHorarioMedico(request, pk):
+    doctor = get_object_or_404(DoctorDetalle, pk=pk)
+    times = Horario.objects.all()
+
+    if request.method == "POST":
+        fecha = request.POST.get("date")
+        hora = request.POST.get("time")
+        horario = Horario.objects.filter(fecha=fecha, hora_inicio=hora).first()
+        if not horario:
+            messages.error(request, "No existe un horario con esa fecha y hora.")
+        elif DoctorHorario.objects.filter(doctor=doctor, horario=horario).exists():
+            messages.error(request, "El médico ya tiene asignado ese horario.")
+        else:
+            DoctorHorario.objects.create(doctor=doctor, horario=horario)
+            messages.success(request, "Horario asignado correctamente.")
+            return redirect("lista_medicos")
+
+    context = {
+        "doc": doctor,
+        "times": times,
+    }
+    return render(request, "doctor/horario_medicos.html", context)
 
 @login_required
 def home(request):
