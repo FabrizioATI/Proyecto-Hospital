@@ -179,16 +179,11 @@ def register(request):
 
 def registrarHorarioMedico(request, pk):
     doctor = get_object_or_404(DoctorDetalle, pk=pk)
-    errors = {}
-
-
-    doctor = get_object_or_404(DoctorDetalle, pk=doctor_id) if doctor_id else None
     times = Horario.objects.all()
 
     if request.method == "POST":
         fecha = request.POST.get("date")
         hora = request.POST.get("time")
-        # Buscar el horario por fecha y hora seleccionada
         horario = Horario.objects.filter(fecha=fecha, hora_inicio=hora).first()
         if not horario:
             messages.error(request, "No existe un horario con esa fecha y hora.")
@@ -197,7 +192,7 @@ def registrarHorarioMedico(request, pk):
         else:
             DoctorHorario.objects.create(doctor=doctor, horario=horario)
             messages.success(request, "Horario asignado correctamente.")
-            return redirect("horario_medicos")
+            return redirect("lista_medicos")
 
     context = {
         "doc": doctor,
