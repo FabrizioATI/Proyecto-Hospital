@@ -207,4 +207,4 @@ def registrarHorarioMedico(request, pk):
         "doc": doctor,
         "times": times,
     }
-    return render(request, "doctor/horario_medicos.html", context)
+
