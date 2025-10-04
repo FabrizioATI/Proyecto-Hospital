@@ -16,5 +16,8 @@ urlpatterns = [
     path('home/', views.home, name='home'),
     path('', views.login_view),
     path('logout/', views.logout_view, name='logout'),
-
+    path("pacientes/registro/", views.registrar_paciente, name="registro_paciente"),
+    path("pacientes/lista/", views.lista_pacientes, name="lista_pacientes"),
+    path("pacientes/editar/<int:pk>/", views.editar_paciente, name="editar_paciente"),
+    path("pacientes/eliminar/<int:pk>/", views.eliminar_paciente, name="eliminar_paciente"),
 ]
