@@ -17,6 +17,13 @@
               <span class="nav-link-text">Lista de Médicos</span>
             </a>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'citas' in segment %} active {% endif %}" href="{% url 'lista_citas' %}">
+              <i class="ni ni-calendar-grid-58 text-orange"></i>
+              <span class="nav-link-text">Lista de Citas</span>
+            </a>
+          </li>
         </ul>
       </div>
     </div>
