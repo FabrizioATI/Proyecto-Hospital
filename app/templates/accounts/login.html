@@ -3,119 +3,93 @@
 {% block title %}Iniciar sesión{% endblock %}
 
 {% block content %}
-
-    <div class="soft-background">
-        <div class="floating-shapes">
-            <div class="soft-blob blob-1"></div>
-            <div class="soft-blob blob-2"></div>
-            <div class="soft-blob blob-3"></div>
-            <div class="soft-blob blob-4"></div>
-        </div>
+<div class="soft-background">
+    <div class="floating-shapes">
+        <div class="soft-blob blob-1"></div>
+        <div class="soft-blob blob-2"></div>
+        <div class="soft-blob blob-3"></div>
+        <div class="soft-blob blob-4"></div>
     </div>
+</div>
 
-    <div class="login-container">
-        <div class="soft-card">
-            <div class="comfort-header">
-                <div class="gentle-logo">
-                    <div class="logo-circle">
-                        <div class="comfort-icon">
-                            <img src="{% static 'assets/img/icon_app_white.png' %}" alt="logo" class="img-fluid" style="max-height: 60px; max-width: 270px;" />
-                        </div>
-                        <div class="gentle-glow"></div>
+<div class="login-container">
+    <div class="soft-card">
+        <div class="comfort-header">
+            <div class="gentle-logo">
+                <div class="logo-circle">
+                    <div class="comfort-icon">
+                        <img src="{% static 'assets/img/icon_app_white.png' %}" alt="logo" 
+                             class="img-fluid" style="max-height: 60px; max-width: 270px;" />
                     </div>
+                    <div class="gentle-glow"></div>
                 </div>
-                <h1 class="comfort-title">¡Bienvenido!</h1>
-                <p class="gentle-subtitle">Sistema de Gestión de Citas</p>
             </div>
-            
-            <form method="post" action="{% url 'login' %}" class="comfort-form" id="loginForm" novalidate>
+            <h1 class="comfort-title">¡Bienvenido!</h1>
+            <p class="gentle-subtitle">Sistema de Gestión de Citas</p>
+        </div>
+        
+        <!-- FORMULARIO LOGIN -->
+        <form method="POST" action="{% url 'login' %}" class="comfort-form" id="loginForm" novalidate>
             {% csrf_token %}
 
-  {% if messages %}
-    <ul>
-      {% for m in messages %}<li>{{ m }}</li>{% endfor %}
-    </ul>
-  {% endif %}
+            {% if messages %}
+              <ul>
+                {% for m in messages %}
+                  <li>{{ m }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
 
-  {{ form.non_field_errors }}
-                <div class="soft-field">
-                    <div class="field-container">
-                        <input type="text" id="dni" name="dni" inputmode="numeric" pattern="\d*" autocomplete="username">
-<label for="dni">DNI</label>
-                        <div class="field-accent"></div>
-                    </div>
+            <!-- DNI -->
+            <div class="soft-field">
+                <div class="field-container">
+                    <input type="text" id="dni" name="dni" required inputmode="numeric" pattern="\d*">
+                    <label for="dni">DNI</label>
+                    <div class="field-accent"></div>
                 </div>
+            </div>
 
-                <div class="soft-field">
-                    <div class="field-container">
-                        <input type="password" id="password" name="password" required autocomplete="current-password">
-                        <label for="id_password">Contraseña</label>
-                        <button type="button" class="gentle-toggle" id="passwordToggle" aria-label="Toggle password visibility">
-                            <div class="toggle-icon">
-                                <svg class="eye-open" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <path d="M10 3c-4.5 0-8.3 3.8-9 7 .7 3.2 4.5 7 9 7s8.3-3.8 9-7c-.7-3.2-4.5-7-9-7z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                    <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                </svg>
-                                <svg class="eye-closed" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <path d="M3 3l14 14M8.5 8.5a3 3 0 004 4m2.5-2.5C15 10 12.5 7 10 7c-.5 0-1 .1-1.5.3M10 13c-2.5 0-4.5-2-5-3 .3-.6.7-1.2 1.2-1.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                        </button>
-                        <div class="field-accent"></div>
-                    </div>
-                    <span class="gentle-error" id="passwordError"></span>
-                </div>
-
-                <div class="comfort-options">
-                    <label class="gentle-checkbox">
-                        <input type="checkbox" id="remember" name="remember">
-                        <span class="checkbox-soft">
-                            <div class="check-circle"></div>
-                            <svg class="check-mark" width="12" height="10" viewBox="0 0 12 10" fill="none">
-                                <path d="M1 5l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- CONTRASEÑA -->
+            <div class="soft-field">
+                <div class="field-container">
+                    <input type="password" id="contraseña" name="contraseña" required>
+                    <label for="contraseña">Contraseña</label>
+                    <button type="button" class="gentle-toggle" id="passwordToggle" aria-label="Toggle password visibility">
+                        <div class="toggle-icon">
+                            <svg class="eye-open" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 3c-4.5 0-8.3 3.8-9 7 .7 3.2 4.5 7 9 7s8.3-3.8 9-7c-.7-3.2-4.5-7-9-7z" 
+                                      stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                <circle cx="10" cy="10" r="3" 
+                                        stroke="currentColor" stroke-width="1.5" fill="none"/>
                             </svg>
-                        </span>
-                        <span class="checkbox-text">Recuérdame</span>
-                    </label>
-                    <a href="#" class="comfort-link">¿Olvidaste tu contraseña?</a>
-                </div>
-
-                <button type="submit" class="comfort-button">
-                    <div class="button-background"></div>
-                    <span class="button-text">Iniciar sesión</span>
-                    <div class="button-loader">
-                        <div class="gentle-spinner">
-                            <div class="spinner-circle"></div>
+                            <svg class="eye-closed" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M3 3l14 14M8.5 8.5a3 3 0 004 4m2.5-2.5C15 10 12.5 7 10 7c-.5 0-1 .1-1.5.3M10 13c-2.5 0-4.5-2-5-3 .3-.6.7-1.2 1.2-1.7" 
+                                      stroke="currentColor" stroke-width="1.5" 
+                                      stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                         </div>
-                    </div>
-                    <div class="button-glow"></div>
-                </button>
-            </form>
-
-            <div class="comfort-signup">
-                <span class="signup-text">¿No tienes una cuenta?</span>
-                <a href="{% url 'register' %}" class="comfort-link signup-link">Registrate</a>
+                    </button>
+                    <div class="field-accent"></div>
+                </div>
             </div>
 
-            <div class="gentle-success" id="successMessage">
-                <div class="success-bloom">
-                    <div class="bloom-rings">
-                        <div class="bloom-ring ring-1"></div>
-                        <div class="bloom-ring ring-2"></div>
-                        <div class="bloom-ring ring-3"></div>
-                    </div>
-                    <div class="success-icon">
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                            <path d="M8 14l5 5 11-11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+            <!-- BOTÓN -->
+            <button type="submit" class="comfort-button">
+                <div class="button-background"></div>
+                <span class="button-text">Iniciar sesión</span>
+                <div class="button-loader">
+                    <div class="gentle-spinner">
+                        <div class="spinner-circle"></div>
                     </div>
                 </div>
-                <h3 class="success-title">Welcome!</h3>
-                <p class="success-desc">Taking you to your dashboard...</p>
-            </div>
+                <div class="button-glow"></div>
+            </button>
+        </form>
+
+        <div class="comfort-signup">
+            <span class="signup-text">¿No tienes una cuenta?</span>
+            <a href="{% url 'register' %}" class="comfort-link signup-link">Registrate</a>
         </div>
     </div>
-
-    
-
+</div>
 {% endblock content %}
