@@ -1,6 +1,6 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %} Lista de Médicos {% endblock title %}
+{% block title %} Lista de Horarios {% endblock title %}
 
 {% block content %}
 
@@ -18,47 +18,44 @@
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Lista de Médicos</h3>
-                    <a href="{% url 'registro_medico' %}" class="btn btn-primary btn-sm">
-                        Agregar Médico
-                    </a>
+                    <h3 class="mb-0">Lista de Horarios</h3>
+                    <a href="{% url 'registro_horario_medico' %}" class="btn btn-primary btn-sm">Agregar Horario</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped align-middle">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Nombre</th>
+                                    <th>Doctor</th>
                                     <th>Especialidad</th>
-                                    <th>Colegiatura</th>
+                                    <th>Fecha</th>
+                                    <th>Hora Inicio</th>
+                                    <th>Hora Fin</th>
                                     <th>Mantenimiento</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for doc in medicos %}
+                                {% for dh in horarios %}
                                 <tr>
                                     <td>
-                                        <strong>{{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}</strong>
+                                        <strong>{{ dh.doctor.entidad.nombre }} {{ dh.doctor.entidad.apellidoPaterno }} {{ dh.doctor.entidad.apellidoMaterno }}</strong>
                                     </td>
-                                    <td>{{ doc.especialidad.nombre }}</td>
-                                    <td>{{ doc.nro_colegiatura }}</td>
+                                    <td>{{ dh.doctor.especialidad.nombre }}</td>
+                                    <td>{{ dh.horario.fecha|date:"Y/m/d" }}</td>
+                                    <td>{{ dh.horario.hora_inicio|time:"h:i A" }}</td>
+                                    <td>{{ dh.horario.hora_fin|time:"h:i A" }}</td>
                                     <td class="text-end">
-                                        <a href="{% url 'editar_medico' doc.id %}" class="btn btn-sm btn-primary">
-                                            Editar
-                                        </a>
-                                        <a href="{% url 'eliminar_medico' doc.id %}" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('¿Estás seguro de eliminar este médico?');">
-                                            Eliminar
-                                        </a>
+                                        <a href="{% url 'editar_horario_medico' dh.id %}" class="btn btn-sm btn-primary">Editar</a>
+                                        <a href="{% url 'eliminar_horario_medico' dh.id %}" class="btn btn-sm btn-danger"
+                                           onclick="return confirm('¿Estás seguro de eliminar este horario?');">Eliminar</a>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted">No hay médicos registrados</td>
+                                    <td colspan="6" class="text-center text-muted">No hay horarios registrados</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
-
                         </table>
                     </div>
                 </div>

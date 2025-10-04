@@ -1,5 +1,6 @@
 {% extends 'layouts/base.html' %}
 {% block title %} Lista de Citas {% endblock title %}
+
 {% block content %}
 <div class="container-fluid mt-4">
   <div class="row">
@@ -7,8 +8,15 @@
       <div class="card shadow">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h3 class="mb-0">Lista de Citas</h3>
-          <a href="{% url 'registro_cita' %}" class="btn btn-primary btn-sm"> Agregar Cita </a>
+
+          {# Mostrar botón solo si el usuario es paciente #}
+          {% if tipo_usuario != 'doctor' %}
+          <a href="{% url 'registrar_cita_paciente' request.session.entidad_id %}" class="btn btn-primary btn-sm">
+            Agregar Cita
+          </a>
+          {% endif %}
         </div>
+
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-striped align-middle">
@@ -16,10 +24,16 @@
                 <tr>
                   <th>Paciente</th>
                   <th>Doctor</th>
-                  <th>Horario</th>
+                  <th>Fecha</th>
+                  <th>Hora Inicio</th>
+                  <th>Hora Fin</th>
                   <th>Estado</th>
                   <th>Motivo</th>
+
+                  {# Mostrar columna de mantenimiento solo si no es doctor #}
+                  {% if tipo_usuario != 'doctor' %}
                   <th>Mantenimiento</th>
+                  {% endif %}
                 </tr>
               </thead>
               <tbody>
@@ -27,17 +41,25 @@
                 <tr>
                   <td>{{ c.paciente.nombre }} {{ c.paciente.apellidoPaterno }}</td>
                   <td>{{ c.doctor_horario.doctor.entidad.nombre }} ({{ c.doctor_horario.doctor.especialidad.nombre }})</td>
-                  <td>{{ c.doctor_horario.horario.fecha }} {{ c.doctor_horario.horario.hora_inicio }} - {{ c.doctor_horario.horario.hora_fin }}</td>
+                  <td>{{ c.doctor_horario.horario.fecha|date:"d/m/Y" }}</td>
+                  <td>{{ c.doctor_horario.horario.hora_inicio|time:"h:i a" }}</td>
+                  <td>{{ c.doctor_horario.horario.hora_fin|time:"h:i a" }}</td>
                   <td>{{ c.estado }}</td>
                   <td>{{ c.motivo }}</td>
+
+                  {% if tipo_usuario != 'doctor' %}
                   <td class="text-end">
-                    <a href="{% url 'editar_cita' c.id %}" class="btn btn-sm btn-primary">Editar</a>
-                    <a href="{% url 'eliminar_cita' c.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta cita?');">Eliminar</a>
+                    <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
+                    <a href="{% url 'eliminar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-danger"
+                      onclick="return confirm('¿Estás seguro de eliminar esta cita?');">Eliminar</a>
                   </td>
+                  {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="6" class="text-center text-muted">No hay citas registradas</td>
+                  <td colspan="{% if tipo_usuario == 'doctor' %}7{% else %}8{% endif %}" class="text-center text-muted">
+                    No hay citas registradas
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
