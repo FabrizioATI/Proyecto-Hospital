@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad, DoctorHorario, Horario
 from django.contrib.auth import logout as django_logout 
-from .forms import LoginForm   
+from .forms import LoginForm 
 
 def lista_medicos(request):
     medicos = DoctorDetalle.objects.select_related("entidad", "especialidad").all()
@@ -107,90 +107,84 @@ def editar_medico(request, pk):
     )
 
 def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('home')
+    if request.method == "POST":
+        dni = request.POST.get("dni")
+        password = request.POST.get("contraseña")
 
-    form = LoginForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        dni = form.cleaned_data['dni']
-        password = form.cleaned_data['password']
-        user = authenticate(request, username=dni, password=password)
-        if user is not None:
-            login(request, user)
-            messages.success(request, "¡Bienvenido!")
-            return redirect(request.GET.get('next') or 'home')
-        messages.error(request, "DNI o contraseña inválidos.")
-    return render(request, 'accounts/login.html', {'form': form})
+        try:
+            entidad = Entidad.objects.get(dni=dni)
+            if entidad.contraseña == password:
+                request.session["entidad_id"] = entidad.id
+
+                rol_entidad = RolEntidad.objects.filter(entidad=entidad).first()
+
+                if rol_entidad:
+                    if rol_entidad.rol.id == 1:  # Doctor
+                        return redirect("admin_home")
+                    elif rol_entidad.rol.id == 2:  # Paciente
+                        return redirect("home")
+                    else:
+                        messages.error(request, "Rol no reconocido")
+                else:
+                    messages.error(request, "No tienes un rol asignado")
+
+            else:
+                messages.error(request, "Contraseña incorrecta")
+        except Entidad.DoesNotExist:
+            messages.error(request, "Usuario no encontrado")
+
+    return render(request, "accounts/login.html")
+
+def home(request):
+    if "entidad_id" in request.session:
+        entidad = Entidad.objects.get(id=request.session["entidad_id"])
+        return render(request, "doctor/lista_medicos.html", {"entidad": entidad})
+    else:
+        return redirect("login")
 
 def logout_view(request):
-    django_logout(request)
+    # django_logout(request)
     return redirect('login')
 
 def register(request):
-  if request.method == 'POST':
-    user_status = request.POST.get('user_config')
-    first_name = request.POST.get('user_firstname')
-    last_name = request.POST.get('user_lastname')
-    profile_pic = ""
+    errors = {}
+    if request.method == "POST":
+        nombre = request.POST.get("nombre")
+        apellidoPaterno = request.POST.get("apellidoPaterno")
+        apellidoMaterno = request.POST.get("apellidoMaterno")
+        correo = request.POST.get("correo")
+        contraseña = request.POST.get("contraseña")
+        telefono = request.POST.get("telefono")
+        dni = request.POST.get("dni")
 
-    if "profile_pic" in request.FILES:
-      profile_pic = request.FILES['profile_pic']
+        # Validaciones
+        if Entidad.objects.filter(dni=dni).exists():
+            errors["dni"] = "Este DNI ya está registrado."
 
-    username = request.POST.get('user_id')
-    email = request.POST.get('email')
-    gender = request.POST.get('user_gender')
-    birthday = request.POST.get("birthday")
-    password = request.POST.get('password')
-    confirm_password = request.POST.get('conf_password')
-    address_line = request.POST.get('address_line')
-    region = request.POST.get('region')
-    city = request.POST.get('city')
-    pincode = request.POST.get('pincode')
+        if Entidad.objects.filter(correo=correo).exists():
+            errors["correo"] = "Este correo ya está registrado."
 
-    if len(password) < 6:
-      messages.error(request, 'Password must be at least 6 characters long.')
-      return render(request, 'users/register.html', context={'user_config': user_status, 'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender, 'address_line': address_line, 'region': region, 'city': city, 'pincode': pincode})
+        if not errors:
+            entidad = Entidad.objects.create(
+                nombre=nombre,
+                apellidoPaterno=apellidoPaterno,
+                apellidoMaterno=apellidoMaterno,
+                correo=correo,
+                contraseña=contraseña,
+                telefono=telefono,
+                dni=dni,
+            )
 
-    if password != confirm_password:
-      messages.error(request, 'Passwords do not match.')
-      return render(request, 'users/register.html', context={'user_config': user_status, 'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender, 'address_line': address_line, 'region': region, 'city': city, 'pincode': pincode})
+            rol_paciente, created = Rol.objects.get_or_create(nombre_rol="Paciente")
+            RolEntidad.objects.create(entidad=entidad, rol=rol_paciente)
 
-    if Users.objects.filter(username=username).exists():
-      messages.error(request, 'Username already exists. Try again with a different username.')
-      return render(request, 'users/register.html', context={'user_config': user_status, 'user_firstname': first_name, 'user_lastname': last_name, 'user_id': username, 'email': email, 'user_gender': gender, 'address_line': address_line, 'region': region, 'city': city, 'pincode': pincode})
+            return redirect("login")
 
-    address = Address.objects.create(address_line=address_line, region=region,city=city, code_postal=pincode)
-
-    user = Users.objects.create_user(
-      first_name=first_name,
-      last_name=last_name,
-      profile_avatar=profile_pic,
-      username=username,
-      email=email,
-      gender=gender,
-      birthday=birthday,
-      password=password,
-      id_address=address,
-      is_doctor=(user_status == 'Doctor')
+    return render(
+        request,
+        "accounts/register.html",
+        {"errors": errors, "form_data": request.POST},
     )
-      
-    user.save()
-
-    if user_status == 'Doctor':
-      specialty = request.POST.get('Speciality')
-      specialty_name = Specialty.objects.get(name=specialty)
-      bio = request.POST.get('bio')
-      doctor = Doctors.objects.create(user=user, specialty=specialty_name, bio=bio)
-      doctor.save()
-        
-    elif user_status == 'Patient':
-        insurance = request.POST.get('insurance')
-        patient = Patients.objects.create(user=user, insurance=insurance)
-        patient.save()
-
-    messages.success(request, 'Your account has been successfully registered. Please login.', extra_tags='success')
-
-  return render(request, 'accounts/register.html')
 
 def registrarHorarioMedico(request, pk):
     doctor = get_object_or_404(DoctorDetalle, pk=pk)
@@ -213,87 +207,4 @@ def registrarHorarioMedico(request, pk):
         "doc": doctor,
         "times": times,
     }
-    return render(request, "doctor/horario_medicos.html", context)
 
-
-def lista_pacientes(request):
-    pacientes = Entidad.objects.filter(rolentidad__rol__nombre_rol="paciente")
-    return render(request, "paciente/lista_pacientes.html", {
-        "pacientes": pacientes,
-        "segment": "pacientes"
-    })
-
-
-def registrar_paciente(request):
-    errors = {}
-    if request.method == "POST":
-        nombre = request.POST.get("nombre")
-        apellidoPaterno = request.POST.get("apellidoPaterno")
-        apellidoMaterno = request.POST.get("apellidoMaterno")
-        correo = request.POST.get("correo")
-        contraseña = request.POST.get("contraseña")
-        telefono = request.POST.get("telefono")
-        dni = request.POST.get("dni")
-
-        if Entidad.objects.filter(dni=dni).exists():
-            errors["dni"] = "Este DNI ya está registrado."
-
-        if not errors:
-            entidad = Entidad.objects.create(
-                nombre=nombre,
-                apellidoPaterno=apellidoPaterno,
-                apellidoMaterno=apellidoMaterno,
-                correo=correo,
-                contraseña=contraseña,
-                telefono=telefono,
-                dni=dni,
-            )
-
-            rol_paciente, _ = Rol.objects.get_or_create(nombre_rol="paciente")
-            RolEntidad.objects.create(entidad=entidad, rol=rol_paciente)
-
-            messages.success(request, "Paciente registrado correctamente.")
-            return redirect("lista_pacientes")
-
-    return render(request, "paciente/registrar_pacientes.html", {
-        "errors": errors,
-        "segment": "pacientes"
-    })
-
-
-def editar_paciente(request, pk):
-    paciente = get_object_or_404(Entidad, pk=pk)
-    errors = {}
-
-    if request.method == "POST":
-        dni = request.POST.get("dni")
-        if Entidad.objects.filter(dni=dni).exclude(id=paciente.id).exists():
-            errors["dni"] = "Este DNI ya está registrado."
-
-        if not errors:
-            paciente.nombre = request.POST.get("nombre")
-            paciente.apellidoPaterno = request.POST.get("apellidoPaterno")
-            paciente.apellidoMaterno = request.POST.get("apellidoMaterno")
-            paciente.correo = request.POST.get("correo")
-            paciente.telefono = request.POST.get("telefono")
-            paciente.dni = dni
-            paciente.save()
-
-            messages.success(request, "Paciente actualizado correctamente.")
-            return redirect("lista_pacientes")
-
-    return render(request, "paciente/editar_paciente.html", {
-        "paciente": paciente,
-        "errors": errors,
-        "segment": "pacientes"
-    })
-
-
-def eliminar_paciente(request, pk):
-    paciente = get_object_or_404(Entidad, pk=pk)
-    paciente.delete()
-    return redirect("lista_pacientes")
-
-@login_required
-def home(request):
-    return render(request, 'home/index.html') 
