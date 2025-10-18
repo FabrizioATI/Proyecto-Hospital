@@ -1,0 +1,75 @@
+{% extends 'layouts/base.html' %}
+{% block title %} Editar Cita {% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-xl-12 order-xl-1">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Editar Cita</h3>
+        </div>
+        <div class="card-body">
+
+          <!-- FORMULARIO GET PARA FILTROS (solo visual) -->
+          <form method="get" class="mb-4">
+            <!-- Especialidad -->
+            <div class="form-group mb-3">
+              <label>Especialidad</label>
+              <select name="especialidad" class="form-control" disabled>
+                {% for esp in especialidades %}
+                  <option value="{{ esp.id }}" {% if esp.id == selected_esp %}selected{% endif %}>
+                    {{ esp.nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Doctor -->
+            <div class="form-group mb-3">
+              <label>Doctor</label>
+              <select name="doctor" class="form-control" disabled>
+                {% for doc in doctores %}
+                  <option value="{{ doc.id }}" {% if doc.id == selected_doc %}selected{% endif %}>
+                    {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+
+          <!-- FORMULARIO POST PARA EDITAR CITA -->
+          <form method="post">
+            {% csrf_token %}
+
+            <!-- Horario -->
+            <div class="form-group mb-3">
+              <label>Horario</label>
+              <select name="doctor_horario" class="form-control" disabled>
+                {% for h in horarios %}
+                  <option value="{{ h.id }}" {% if h.id == cita.doctor_horario.id %}selected{% endif %}>
+                    {{ h.horario.fecha|date:"Y/m/d" }} {{ h.horario.hora_inicio|time:"h:i A" }} - {{ h.horario.hora_fin|time:"h:i A" }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Motivo -->
+            <div class="form-group mb-3">
+              <label>Motivo</label>
+              <textarea name="motivo" class="form-control">{{ cita.motivo }}</textarea>
+              {% if errors.motivo %}
+                <small class="text-danger">{{ errors.motivo }}</small>
+              {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a href="{% url 'lista_citas_paciente' request.session.entidad_id %}" class="btn btn-secondary">Cancelar</a>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

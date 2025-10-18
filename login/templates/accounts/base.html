@@ -1,0 +1,19 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{% endblock title %} - Gestión de Citas</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/icon_app.png' %}">
+    <link href="{% static 'assets/css/style.css' %}" rel="stylesheet"/>
+  </head>
+
+  <body>
+            {% block content %}{% endblock content %}
+
+    <script src="{% static 'assets/js/form-utils.js' %}"></script>
+    <script src="{% static 'assets/js/script.js' %}?v=3" defer></script>
+    </body>
+</html>

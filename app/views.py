@@ -62,7 +62,7 @@ def registrar_medico(request):
                 nro_colegiatura=nro_colegiatura,
             )
 
-            rol_doctor, created = Rol.objects.get_or_create(nombre_rol="doctor")
+            rol_doctor, created = Rol.objects.get_or_create(nombre_rol="Doctor")
             RolEntidad.objects.create(entidad=entidad, rol=rol_doctor)
 
             # messages.success(request, "Médico registrado correctamente.")
@@ -242,7 +242,7 @@ def registrar_paciente(request):
                 dni=dni,
             )
 
-            rol_paciente, _ = Rol.objects.get_or_create(nombre_rol="paciente")
+            rol_paciente, _ = Rol.objects.get_or_create(nombre_rol="Paciente")
             RolEntidad.objects.create(entidad=entidad, rol=rol_paciente)
 
             # messages.success(request, "Paciente registrado correctamente.")
@@ -320,7 +320,6 @@ def login_view(request):
 
     return render(request, "accounts/login.html")
 
-
 def home(request):
     if "entidad_id" in request.session:
         entidad = Entidad.objects.get(id=request.session["entidad_id"])
@@ -329,7 +328,6 @@ def home(request):
         return redirect("login")
 
 def logout_view(request):
-    # django_logout(request)
     return redirect('login')
 
 def register(request):

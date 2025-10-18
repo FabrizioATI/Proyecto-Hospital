@@ -1,0 +1,71 @@
+<nav class="sidenav navbar navbar-vertical fixed-left navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+  <div class="scrollbar-inner">
+    <div class="sidenav-header align-items-center">
+      <a class="navbar-brand" href="/">
+        <img src="/static/assets/img/brand/blue.png" class="navbar-brand-img" alt="Logo">
+      </a>
+    </div>
+
+    <div class="navbar-inner">
+      <div class="collapse navbar-collapse" id="sidenav-collapse-main">
+        <ul class="navbar-nav">
+
+          {% if request.session.rol_id == 1 %}
+          <!-- Menú para Doctor -->
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'horarios' %} active {% endif %}"
+              href="{% url 'lista_horarios_medico' %}">
+              <i class="ni ni-calendar-grid-58 text-info"></i>
+              <span class="nav-link-text">Lista de Horarios</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lista_citas_doctor' request.session.entidad_id %}">
+              <i class="ni ni-calendar-grid-58 text-orange"></i>
+              <span class="nav-link-text">Mis Citas</span>
+            </a>
+          </li>
+
+          {% elif request.session.rol_id == 2 %}
+          <!-- Menú para Paciente -->
+          <li class="nav-item">
+            <a class="nav-link {% if 'citas' in segment %} active {% endif %}"
+              href="{% url 'lista_citas_paciente' request.session.entidad_id %}">
+              <i class="ni ni-calendar-grid-58 text-orange"></i>
+              <span class="nav-link-text">Lista de Citas</span>
+            </a>
+          </li>
+
+          {% else %}
+          <!-- Menú para Administrador -->
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'medicos' %} active {% endif %}" href="{% url 'lista_medicos' %}">
+              <i class="ni ni-bullet-list-67 text-primary"></i>
+              <span class="nav-link-text">Lista de Médicos</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'pacientes' %} active {% endif %}" href="{% url 'lista_pacientes' %}">
+              <i class="ni ni-single-02 text-success"></i>
+              <span class="nav-link-text">Lista de Pacientes</span>
+            </a>
+          </li>
+          
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'mantenimiento' %} active {% endif %}"
+              href="{% url 'mantenimiento_roles_especialidades' %}">
+              <i class="ni ni-settings text-warning"></i>
+              <span class="nav-link-text">Mantenimiento</span>
+            </a>
+          </li>
+
+          
+          {% endif %}
+
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
