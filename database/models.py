@@ -85,6 +85,14 @@ class Cita(models.Model):
         ],
         default="pendiente"
     )
+    tipo = models.CharField(
+        max_length=20,
+        choices=[
+            ("presencial", "Presencial"),
+            ("virtual", "Virtual"),
+        ],
+        default="presencial"
+    )
     motivo = models.TextField()
 
     def __str__(self):
