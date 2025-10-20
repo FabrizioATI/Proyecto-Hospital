@@ -27,7 +27,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app'
+    'database',
+    'login',
+    'citas',
+    'horarios',
+    'medico',
+    'paciente',
+]
+
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [
+    BASE_DIR / "Integrador" / "static",
 ]
 
 AUTHENTICATION_BACKENDS = [

@@ -1,11 +1,6 @@
-from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad, DoctorHorario, Horario
-from django.contrib.auth import logout as django_logout 
-from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad
-from .models import Cita, DoctorHorario 
+from database.models import Entidad, Especialidad, DoctorDetalle, DoctorHorario, Cita
+
 
 #Index
 def index(request):
@@ -38,12 +33,11 @@ def registrar_cita_paciente(request, paciente_id):
         if not errors:
             doctor_horario = DoctorHorario.objects.get(id=doctor_horario_id)
             Cita.objects.create(
-                paciente=paciente,               # ← El paciente viene de la sesión
+                paciente=paciente,
                 doctor_horario=doctor_horario,
                 motivo=motivo,
                 estado="pendiente",
             )
-            # messages.success(request, "Cita registrada correctamente.")
             return redirect("lista_citas_paciente", paciente_id=paciente_id)
 
     especialidades = Especialidad.objects.all()
@@ -63,8 +57,6 @@ def registrar_cita_paciente(request, paciente_id):
 def editar_cita_paciente(request, paciente_id, pk):
     cita = get_object_or_404(Cita, pk=pk, paciente_id=paciente_id)
     errors = {}
-
-    # Para mostrar las listas
     especialidades = Especialidad.objects.all()
     doctores = DoctorDetalle.objects.filter(especialidad=cita.doctor_horario.doctor.especialidad)
     horarios = DoctorHorario.objects.filter(doctor=cita.doctor_horario.doctor).select_related("horario")
@@ -76,7 +68,6 @@ def editar_cita_paciente(request, paciente_id, pk):
         else:
             cita.motivo = motivo
             cita.save()
-            # messages.success(request, "Cita actualizada correctamente.")
             return redirect("lista_citas_paciente", paciente_id=paciente_id)
 
     return render(request, "citas/editar_cita.html", {
@@ -92,7 +83,6 @@ def editar_cita_paciente(request, paciente_id, pk):
 def eliminar_cita_paciente(request, paciente_id, pk):
     cita = get_object_or_404(Cita, pk=pk, paciente_id=paciente_id)
     cita.delete()
-    # messages.success(request, "Cita eliminada correctamente.")
     return redirect("lista_citas_paciente", paciente_id=paciente_id)
 
 def lista_citas_doctor(request, doctor_id):
