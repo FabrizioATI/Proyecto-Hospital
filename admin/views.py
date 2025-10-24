@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad, DoctorHorario, Horario
 from django.contrib.auth import logout as django_logout 
 from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad
-from .models import Cita, DoctorHorario 
+from .models import Cita, DoctorHorario,Holiday
 
 #Index
 def index(request):

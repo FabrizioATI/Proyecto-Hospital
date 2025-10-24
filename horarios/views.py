@@ -1,10 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from database.models import DoctorDetalle, Horario, DoctorHorario
+from django.http import JsonResponse
+from database.models import DoctorDetalle, Horario, DoctorHorario, Holiday
 
 
 #Index
 def index(request):
     return render(request, "home/index.html")
+
+#Lista de feriados en formato ISO(YYYY-MM-DD)
+def holidays_json(request):
+    """Devuelve la lista de feriados en formato ISO (YYYY-MM-DD).
+
+    Se usa desde el frontend para deshabilitar fechas en el formulario.
+    """
+    fechas = Holiday.objects.values_list('fecha', flat=True).order_by('fecha')
+    iso_dates = [d.isoformat() for d in fechas]
+    return JsonResponse(iso_dates, safe=False)
 
 #CRUD Horario Medico
 def lista_horarios_medico(request):

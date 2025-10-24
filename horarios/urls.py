@@ -7,4 +7,5 @@ urlpatterns = [
     path('horario/editar/<int:pk>/', views.editar_horario_medico, name='editar_horario_medico'),
     path('horario/eliminar/<int:pk>/', views.eliminar_horario_medico, name='eliminar_horario_medico'),
     path('index/', views.index, name='index'),
+    path('api/holidays/', views.holidays_json, name='holidays_json'),
 ]

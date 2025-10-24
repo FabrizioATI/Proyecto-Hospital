@@ -79,4 +79,70 @@
 
 {% endblock content %}
 
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<style>
+  /* Estilo que añadi para el colorcito del campo */
+  input.holiday {
+    background: #ffefef;
+    border-color: #d33;
+    color: #900;
+  }
+  .holiday-msg {
+    color: #900;
+    font-size: .9rem;
+    margin-top: .25rem;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const input = document.querySelector('input[name="fecha"]');
+  if(!input) return;
+  const form = input.closest('form');
+
+  // Se usa la URL nombrada para ser robustos a cambios de prefijo
+  const holidaysUrl = "{% url 'holidays_json' %}";
+
+  fetch(holidaysUrl)
+    .then(r => r.ok ? r.json() : [])
+    .then(holidays => {
+      function checkDate(){
+        const val = input.value; // YYYY-MM-DD
+        const isHoliday = holidays.indexOf(val) !== -1;
+        if(isHoliday){
+          input.classList.add('holiday');
+          input.setCustomValidity('La fecha seleccionada es un feriado y no está disponible.');
+        } else {
+          input.classList.remove('holiday');
+          input.setCustomValidity('');
+        }
+
+        // Mensaje que semuestra debajo del calendario
+        let msg = input.parentNode.querySelector('.holiday-msg');
+        if(isHoliday && !msg){
+          msg = document.createElement('div');
+          msg.className = 'holiday-msg';
+          msg.textContent = 'Fecha feriado — no disponible.';
+          input.parentNode.appendChild(msg);
+        } else if(!isHoliday && msg){
+          msg.remove();
+        }
+      }
+
+      input.addEventListener('change', checkDate);
+      if(input.value) checkDate();
+
+      if(form){
+        form.addEventListener('submit', function(e){
+          if(!input.checkValidity()){
+            e.preventDefault();
+            input.reportValidity();
+          }
+        });
+      }
+    })
+    .catch(()=>{ /* si falla la carga de feriados, no bloquear */ });
+});
+</script>
+
+{% endblock javascripts %}
