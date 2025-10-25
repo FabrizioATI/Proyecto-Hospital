@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><title>Cola de llegada</title></head>
+<body>
+<h2>Cola de llegada – Dr. {{ doctor.entidad.nombres }} {{ doctor.entidad.apellidos }}</h2>
+<h3>En espera</h3>
+<ol>
+{% for item in en_espera %}
+<li>Cita #{{ item.cita.id }} – Paciente: {{ item.cita.paciente.nombres }} {{ item.cita.paciente.apellidos }} – Llegó: {{ item.hora_llegada }}</li>
+{% empty %}
+<li>Sin pacientes en espera</li>
+{% endfor %}
+</ol>
+
+
+<h3>Atendiendo</h3>
+<ul>
+{% for item in atendiendo %}
+<li>Cita #{{ item.cita.id }}</li>
+{% empty %}
+<li>Nadie en atención</li>
+{% endfor %}
+</ul>
+
+
+<h3>Atendidos (últimos)</h3>
+<ul>
+{% for item in atendidos %}
+<li>Cita #{{ item.cita.id }} – {{ item.hora_llegada }}</li>
+{% empty %}
+<li>Sin historial</li>
+{% endfor %}
+</ul>
+</body>
+</html>

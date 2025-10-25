@@ -39,11 +39,10 @@
 
             <form method="POST">
                 {% csrf_token %}
-
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Documento Identidad</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="text" name="dni" value="{{ form_data.dni|default:'' }}" required>
-                        <label for="dni">Documento Identidad</label>
                         <div class="field-accent"></div>
                     </div>
                     {% if errors.dni %}
@@ -51,36 +50,36 @@
                     {% endif %}
                 </div>
 
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Nombre</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="text" name="nombre" value="{{ form_data.nombre|default:'' }}" required>
-                        <label for="nombre">Nombre</label>
                         <div class="field-accent"></div>
                     </div>
                 </div>
 
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Apellido Paterno</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="text" name="apellidoPaterno" value="{{ form_data.apellidoPaterno|default:'' }}"
                             required>
-                        <label for="apellidoPaterno">Apellido Paterno</label>
                         <div class="field-accent"></div>
                     </div>
                 </div>
 
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Apellido Materno</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="text" name="apellidoMaterno" value="{{ form_data.apellidoMaterno|default:'' }}"
                             required>
-                        <label for="apellidoMaterno">Apellido Materno</label>
                         <div class="field-accent"></div>
                     </div>
                 </div>
 
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Correo</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="email" name="correo" value="{{ form_data.correo|default:'' }}" required>
-                        <label for="correo">Correo</label>
                         <div class="field-accent"></div>
                     </div>
                     {% if errors.correo %}
@@ -88,11 +87,11 @@
                     {% endif %}
                 </div>
 
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Contraseña</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="password" id="contraseña" name="contraseña" required
                             autocomplete="current-password">
-                        <label for="contraseña">Contraseña</label>
                         <button type="button" class="gentle-toggle" id="passwordToggle"
                             aria-label="Toggle password visibility">
                             <div class="toggle-icon">
@@ -114,10 +113,10 @@
                     </div>
                 </div>
 
+                <p class="gentle-subtitle" style="margin-left: 6px; margin-bottom: 5px;">Teléfono</p>
                 <div class="soft-field">
                     <div class="field-container">
                         <input type="text" name="telefono" value="{{ form_data.telefono|default:'' }}">
-                        <label for="telefono">Teléfono</label>
                         <div class="field-accent"></div>
                     </div>
                 </div>

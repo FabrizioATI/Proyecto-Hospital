@@ -50,8 +50,9 @@
                   {% if tipo_usuario != 'doctor' %}
                   <td class="text-end">
                     <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
-                    <a href="{% url 'eliminar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-danger"
-                      onclick="return confirm('¿Estás seguro de eliminar esta cita?');">Eliminar</a>
+                    <a href="{% url 'checkin' c.id %}" {% if not cita_permite_checkin %}disabled{% endif %} class="btn btn-sm btn-primary"> Hacer check-in</a>
+                    <a href="{% url 'cancelar_cita' c.id %}" class="btn btn-sm btn-danger"> Cancelar </a>
+                    <a href="{% url 'eliminar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta cita?');">Eliminar</a>
                   </td>
                   {% endif %}
                 </tr>
