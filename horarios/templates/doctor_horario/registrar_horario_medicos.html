@@ -4,6 +4,12 @@
 
 {% block content %}
 
+{% if errors.form %}<div class="alert alert-danger">{{ errors.form }}</div>{% endif %}
+{% if errors.rango %}<div class="alert alert-warning">{{ errors.rango }}</div>{% endif %}
+{% if errors.paso %}<div class="alert alert-warning">{{ errors.paso }}</div>{% endif %}
+{% if errors.conflictos %}<div class="alert alert-warning">{{ errors.conflictos }}</div>{% endif %}
+{% if info.parcial %}<div class="alert alert-info">{{ info.parcial }}</div>{% endif %}
+
 <div class="container-fluid mt-4">
   <div class="row">
     <div class="col-xl-12 order-xl-1">
@@ -28,9 +34,9 @@
                     <label class="form-control-label">Seleccione Doctor</label>
                     <select name="doctor" class="form-control">
                       {% for doc in doctores %}
-                        <option value="{{ doc.id }}">
-                          Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} - {{ doc.especialidad.nombre }}
-                        </option>
+                      <option value="{{ doc.id }}">
+                        Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} - {{ doc.especialidad.nombre }}
+                      </option>
                       {% endfor %}
                     </select>
                   </div>
@@ -53,29 +59,62 @@
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Hora Inicio</label>
-                    <input type="time" name="hora_inicio" class="form-control" required>
+                    <select name="hora_inicio" id="hora_inicio" class="form-control" required>
+                      {% for t in time_slots %}
+                      <option value="{{ t }}">{{ t }}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Hora Fin</label>
-                    <input type="time" name="hora_fin" class="form-control" required>
+                    <select name="hora_fin" id="hora_fin" class="form-control" required>
+                      {% for t in time_slots %}
+                      <option value="{{ t }}">{{ t }}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
-
             <div class="text-right">
               <button type="submit" class="btn btn-primary">Guardar</button>
-
             </div>
-
           </form>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const start = document.getElementById('hora_inicio');
+    const end = document.getElementById('hora_fin');
+
+    function filterEnd() {
+      if (!start.value) return;
+      const [sh, sm] = start.value.split(':').map(Number);
+      const startMin = sh * 60 + sm + 30; // al menos +30 minutos
+
+      Array.from(end.options).forEach(opt => {
+        const [eh, em] = opt.value.split(':').map(Number);
+        const v = eh * 60 + em;
+        opt.disabled = v < startMin;
+      });
+
+      // Si el valor actual de fin quedó inválido, mueve al primer válido
+      if (end.selectedOptions.length && end.selectedOptions[0].disabled) {
+        const firstValid = Array.from(end.options).find(o => !o.disabled);
+        if (firstValid) end.value = firstValid.value;
+      }
+    }
+
+    start.addEventListener('change', filterEnd);
+    filterEnd(); // inicial
+  });
+</script>
 
 {% endblock content %}
 

@@ -1,5 +1,6 @@
 from django.db import models
-
+from django.db.models import Q
+from django.utils import timezone
 
 class Entidad(models.Model):
     id = models.AutoField(primary_key=True)
@@ -23,13 +24,11 @@ class Usuario(models.Model):
     def __str__(self):
         return f"Usuario: {self.entidad.correo}"
 
-
 class Rol(models.Model):
     nombre_rol = models.CharField(max_length=50, unique=True)  # admin, doctor, paciente
 
     def __str__(self):
         return self.nombre_rol
-
 
 class RolEntidad(models.Model):
     entidad = models.ForeignKey(Entidad, on_delete=models.CASCADE)
@@ -38,13 +37,11 @@ class RolEntidad(models.Model):
     def __str__(self):
         return f"{self.entidad} - {self.rol}"
 
-
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.nombre
-
 
 class DoctorDetalle(models.Model):
     entidad = models.ForeignKey(Entidad, on_delete=models.CASCADE)  # Solo si tiene rol doctor
@@ -54,7 +51,6 @@ class DoctorDetalle(models.Model):
     def __str__(self):
         return f"Dr. {self.entidad.nombre} ({self.especialidad.nombre})"
 
-
 class Horario(models.Model):
     fecha = models.DateField()
     hora_inicio = models.TimeField()
@@ -63,14 +59,34 @@ class Horario(models.Model):
     def __str__(self):
         return f"{self.fecha} {self.hora_inicio}-{self.hora_fin}"
 
-
 class DoctorHorario(models.Model):
     doctor = models.ForeignKey(DoctorDetalle, on_delete=models.CASCADE)
     horario = models.ForeignKey(Horario, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.doctor} - {self.horario}"
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["doctor", "horario"], name="uq_doctor_horario_exact"),
+        ]
 
+class Holiday(models.Model):
+    """Feriados/holidays para controlar disponibilidad por fecha.
+
+    Se guarda solo la fecha (DateField) y un nombre corto opcional.
+    """
+    fecha = models.DateField(unique=True)
+    nombre = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"{self.fecha} - {self.nombre or 'Feriado'}"
+
+class TipoCita(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
 
 class Holiday(models.Model):
     """Feriados/holidays para controlar disponibilidad por fecha.
@@ -90,8 +106,8 @@ class TipoCita(models.Model):
         return self.nombre
 
 class Cita(models.Model):
-    paciente = models.ForeignKey(Entidad, on_delete=models.CASCADE, related_name="citas")
-    doctor_horario = models.ForeignKey(DoctorHorario, on_delete=models.CASCADE)
+    paciente = models.ForeignKey('Entidad', on_delete=models.CASCADE, related_name="citas")
+    doctor_horario = models.ForeignKey('DoctorHorario', on_delete=models.CASCADE, related_name="citas")
     tipo_cita = models.ForeignKey(TipoCita, on_delete=models.SET_NULL, null=True, blank=True)  
     estado = models.CharField(
         max_length=20,
@@ -102,14 +118,6 @@ class Cita(models.Model):
             ("atendida", "Atendida"),
         ],
         default="pendiente"
-    )
-    tipo = models.CharField(   
-        max_length=20,
-        choices=[
-            ("presencial", "Presencial"),
-            ("virtual", "Virtual"),
-        ],
-        default="presencial"
     )
     motivo = models.TextField()
 

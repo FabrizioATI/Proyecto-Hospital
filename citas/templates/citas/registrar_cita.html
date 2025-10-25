@@ -19,7 +19,7 @@
               <select name="especialidad" class="form-control" onchange="this.form.submit()">
                 <option value="">-- Seleccione especialidad --</option>
                 {% for esp in especialidades %}
-                  <option value="{{ esp.id }}" {% if esp.id == selected_esp %}selected{% endif %}>
+                  <option value="{{ esp.id }}"{% if esp.id == selected_esp %} selected{% endif %}>
                     {{ esp.nombre }}
                   </option>
                 {% endfor %}
@@ -32,7 +32,7 @@
               <select name="doctor" class="form-control" {% if not doctores %}disabled{% endif %} onchange="this.form.submit()">
                 <option value="">-- Seleccione doctor --</option>
                 {% for doc in doctores %}
-                  <option value="{{ doc.id }}" {% if doc.id == selected_doc %}selected{% endif %}>
+                  <option value="{{ doc.id }}"{% if doc.id == selected_doc %} selected{% endif %}>
                     {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }}
                   </option>
                 {% endfor %}
@@ -51,10 +51,15 @@
                 <option value="">-- Seleccione horario --</option>
                 {% for h in horarios %}
                   <option value="{{ h.id }}">
-                    {{ h.horario.fecha|date:"Y/m/d" }} {{ h.horario.hora_inicio|time:"h:i A" }} - {{ h.horario.hora_fin|time:"h:i A" }}
+                    {{ h.horario.fecha|date:"Y/m/d" }}
+                    {{ h.horario.hora_inicio|time:"h:i A" }} - {{ h.horario.hora_fin|time:"h:i A" }}
+                    {% if h.ocupado %} (Ocupado – se te añadirá a la lista de espera){% endif %}
                   </option>
                 {% endfor %}
               </select>
+              <small class="form-text text-muted">
+                Si eliges un horario marcado como “Ocupado”, el sistema te añadirá automáticamente a la lista de espera para ese turno.
+              </small>
               {% if errors.doctor_horario %}<small class="text-danger">{{ errors.doctor_horario }}</small>{% endif %}
             </div>
 
