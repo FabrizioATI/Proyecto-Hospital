@@ -9,6 +9,7 @@ def index(request):
 
 #Login
 def login_view(request):
+    ctx = {}
     if request.method == "POST":
         dni = request.POST.get("dni")
         password = request.POST.get("contraseña")
@@ -23,24 +24,24 @@ def login_view(request):
                 rol_entidad = RolEntidad.objects.filter(entidad=entidad).first()
 
                 if rol_entidad:
-                    request.session["rol_id"] = rol_entidad.rol.id
+                    request.session["codigo_rol"] = rol_entidad.rol.codigo_rol
 
-                    if rol_entidad.rol.id == 1:  # Doctor
+                    if rol_entidad.rol.codigo_rol == "001":  # Doctor
                         return redirect("index")
-                    elif rol_entidad.rol.id == 2:  # Paciente
+                    elif rol_entidad.rol.codigo_rol == "002":  # Paciente
                         return redirect("index")
-                    elif rol_entidad.rol.id == 3:  # Administrador
+                    elif rol_entidad.rol.codigo_rol == "003":  # Administrador
                         return redirect("index")
                     else:
-                        messages.error(request, "Rol no reconocido")
+                        ctx["login_error"] = "Rol no reconocido"
                 else:
-                    messages.error(request, "No tienes un rol asignado")
+                    ctx["login_error"] = "No tienes un rol asignado"
             else:
-                messages.error(request, "Contraseña incorrecta")
+                ctx["login_error"] = "Contraseña incorrecta"
         except Entidad.DoesNotExist:
-            messages.error(request, "Usuario no encontrado")
+            ctx["login_error"] = "Usuario no encontrado"
 
-    return render(request, "accounts/login.html")
+    return render(request, "accounts/login.html", ctx)
 
 def home(request):
     if "entidad_id" in request.session:
@@ -81,7 +82,7 @@ def register(request):
                 dni=dni,
             )
 
-            rol_paciente, created = Rol.objects.get_or_create(nombre_rol="Paciente")
+            rol_paciente, created = Rol.objects.get_or_create(codigo_rol="002", nombre_rol="Paciente")
             RolEntidad.objects.create(entidad=entidad, rol=rol_paciente)
 
             return redirect("login")

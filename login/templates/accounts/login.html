@@ -3,6 +3,37 @@
 {% block title %}Iniciar sesión{% endblock %}
 
 {% block content %}
+
+{% if login_error %}
+<style>
+  .toast-lite {
+    position: fixed; top: 1rem; right: 1rem; z-index: 1080;
+    min-width: 260px; max-width: 360px; color: #fff;
+    background: #dc3545; /* rojo por defecto (error) */
+    border-radius: 10px; padding: .75rem 1rem; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    display: flex; align-items: center; gap: .75rem;
+  }
+  .toast-lite.warning { background: #fd7e14; } /* naranja (warning) */
+  .toast-lite .close-x {
+    margin-left: auto; background: transparent; border: none; color: #fff;
+    font-size: 1.1rem; cursor: pointer;
+  }
+</style>
+
+<div id="toastLite" class="toast-lite" role="status" aria-live="polite" aria-atomic="true">
+  <span>{{ login_error }}</span>
+  <button class="close-x" aria-label="Cerrar" onclick="document.getElementById('toastLite').remove()">×</button>
+</div>
+
+<script>
+  setTimeout(function () {
+    var t = document.getElementById('toastLite');
+    if (t) t.remove();
+  }, 3000); // autocierra en 3s
+</script>
+{% endif %}
+
+
 <div class="soft-background">
     <div class="floating-shapes">
         <div class="soft-blob blob-1"></div>

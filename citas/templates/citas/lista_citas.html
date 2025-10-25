@@ -31,7 +31,6 @@
                   <th>Fecha</th>
                   <th>Hora Inicio</th>
                   <th>Hora Fin</th>
-                  <th>Tipo de Cita</th>
                   <th>Modalidad</th>
                   <th>Estado</th>
                   <th>Motivo</th>
@@ -54,18 +53,19 @@
                   <td>{{ c.doctor_horario.horario.fecha|date:"d/m/Y" }}</td>
                   <td>{{ c.doctor_horario.horario.hora_inicio|time:"h:i a" }}</td>
                   <td>{{ c.doctor_horario.horario.hora_fin|time:"h:i a" }}</td>
-
-                  <!-- 🔹 Nuevos campos -->
-                  <td>{{ c.tipo_cita.nombre }}</td>
                   <td>{{ c.get_tipo_display }}</td>
-
                   <td>{{ c.estado|title }}</td>
                   <td>{{ c.motivo }}</td>
 
                   {% if tipo_usuario != 'doctor' %}
                   <td class="text-end">
                     <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
-                    <a href="{% url 'checkin' c.id %}" {% if not cita_permite_checkin %}disabled{% endif %} class="btn btn-sm btn-primary"> Hacer check-in</a>
+                    {% if c.estado == 'pendiente' %}
+                      <a href="{% url 'checkin' c.id %}"
+                        class="btn btn-sm btn-primary">
+                        Hacer check-in
+                      </a>
+                    {% endif %}
                     <a href="{% url 'cancelar_cita' c.id %}" class="btn btn-sm btn-danger"> Cancelar </a>
                     <a href="{% url 'eliminar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta cita?');">Eliminar</a>
                   </td>

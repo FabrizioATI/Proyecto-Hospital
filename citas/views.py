@@ -2,7 +2,7 @@ from django.db import transaction, IntegrityError
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import render, redirect, get_object_or_404
-from database.models import Entidad, Especialidad, DoctorDetalle, DoctorHorario, Cita, WaitlistItem, CheckIn, TipoCita
+from database.models import Entidad, Especialidad, DoctorDetalle, DoctorHorario, Cita, WaitlistItem, CheckIn
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -24,32 +24,21 @@ def lista_citas_paciente(request, paciente_id):
     return render(request, "citas/lista_citas.html", {"citas": citas})
 
 def registrar_cita_paciente(request, paciente_id):
-    from database.models import TipoCita  # Import local para evitar dependencias circulares
     paciente = get_object_or_404(Entidad, id=paciente_id)
     errors = {}
 
-    # Filtros GET
     especialidad_id = request.GET.get("especialidad")
     doctor_id = request.GET.get("doctor")
 
-    # Si se envía el formulario (POST)
     if request.method == "POST":
         doctor_horario_id = request.POST.get("doctor_horario")
         motivo = request.POST.get("motivo")
-        tipo_cita_id = request.POST.get("tipo_cita")
-        modalidad = request.POST.get("tipo")
 
-        # Validaciones
         if not doctor_horario_id:
             errors["doctor_horario"] = "Debe seleccionar un horario de doctor."
-        if not tipo_cita_id:
-            errors["tipo_cita"] = "Debe seleccionar un tipo de cita."
-        if not modalidad:
-            errors["tipo"] = "Debe seleccionar la modalidad de la cita."
         if not motivo:
             errors["motivo"] = "Debe ingresar un motivo."
 
-        # Si no hay errores, se guarda la cita
         if not errors:
             try:
                 with transaction.atomic():
@@ -84,21 +73,57 @@ def registrar_cita_paciente(request, paciente_id):
                         messages.success(request, "Cita registrada.")
                         return redirect("lista_citas_paciente", paciente_id=paciente_id)
 
+            except IntegrityError:
+                # Carrera: dos formularios al mismo tiempo. Fallback a waitlist.
+                try:
+                    doctor_horario = DoctorHorario.objects.get(id=doctor_horario_id)
+                    WaitlistItem.objects.get_or_create(
+                        paciente=paciente,
+                        doctor_horario=doctor_horario,
+                        defaults={"estado": "pendiente"},
+                    )
+                    messages.info(
+                        request,
+                        "Ese horario se tomó al mismo tiempo. Te añadimos a la lista de espera."
+                    )
+                    return redirect("lista_citas_paciente", paciente_id=paciente_id)
+                except Exception:
+                    errors["doctor_horario"] = "Ese horario ya fue tomado por otro paciente."
+
+    # GET: filtros y armado de combos
     especialidades = Especialidad.objects.all()
-    doctores = DoctorDetalle.objects.filter(especialidad_id=especialidad_id) if especialidad_id else []
-    horarios = DoctorHorario.objects.filter(doctor_id=doctor_id).select_related("horario") if doctor_id else []
+
+    doctores = (
+        DoctorDetalle.objects.filter(especialidad_id=especialidad_id)
+        if especialidad_id else []
+    )
+
+    # Anotar si el horario está ocupado para deshabilitarlo en el select
+    horarios = []
+    if doctor_id:
+        horarios = (
+            DoctorHorario.objects
+            .filter(doctor_id=doctor_id)
+            .select_related("horario")
+            .annotate(
+                ocupado=Exists(
+                    Cita.objects.filter(
+                        doctor_horario=OuterRef("pk"),
+                        estado__in=["pendiente", "confirmada"]
+                    )
+                )
+            )
+        )
 
     return render(request, "citas/registrar_cita.html", {
         "paciente": paciente,
         "especialidades": especialidades,
         "doctores": doctores,
         "horarios": horarios,
-        "tipos_cita": tipos_cita,
         "errors": errors,
         "selected_esp": int(especialidad_id) if especialidad_id else None,
         "selected_doc": int(doctor_id) if doctor_id else None,
     })
-
 
 def editar_cita_paciente(request, paciente_id, pk):
     cita = get_object_or_404(Cita, pk=pk, paciente_id=paciente_id)
@@ -106,24 +131,13 @@ def editar_cita_paciente(request, paciente_id, pk):
     especialidades = Especialidad.objects.all()
     doctores = DoctorDetalle.objects.filter(especialidad=cita.doctor_horario.doctor.especialidad)
     horarios = DoctorHorario.objects.filter(doctor=cita.doctor_horario.doctor).select_related("horario")
-    tipos_cita = TipoCita.objects.all()  # 🔹 Agregado aquí
 
     if request.method == "POST":
         motivo = request.POST.get("motivo")
-        tipo_cita_id = request.POST.get("tipo_cita")
-        tipo = request.POST.get("tipo")
-
         if not motivo:
             errors["motivo"] = "Debe ingresar un motivo."
-        if not tipo_cita_id:
-            errors["tipo_cita"] = "Debe seleccionar un tipo de cita."
-        if not tipo:
-            errors["tipo"] = "Debe seleccionar una modalidad."
-
-        if not errors:
+        else:
             cita.motivo = motivo
-            cita.tipo_cita_id = tipo_cita_id
-            cita.tipo = tipo
             cita.save()
             return redirect("lista_citas_paciente", paciente_id=paciente_id)
 
@@ -135,7 +149,6 @@ def editar_cita_paciente(request, paciente_id, pk):
         "selected_esp": cita.doctor_horario.doctor.especialidad.id,
         "selected_doc": cita.doctor_horario.doctor.id,
         "errors": errors,
-        "tipos_cita": tipos_cita,  # 🔹 Y también aquí en el contexto
     })
 
 def eliminar_cita_paciente(request, paciente_id, pk):
@@ -168,6 +181,7 @@ def cancelar_cita_view(request, cita_id):
             reverse('aceptar_waitlist', args=[next_wait.id])
         )
         wa_url = send_waitlist_offer_test(next_wait, accept_url)
+        print("-->LINK DE WHATSAPP: ",wa_url)
         messages.info(
             request,
             mark_safe(
@@ -232,3 +246,23 @@ def aceptar_waitlist_token_view(request, item_id, token):
     except Exception as e:
         messages.error(request, f"No se pudo aceptar el cupo: {e}")
         return redirect('/')
+    
+    
+# def checkin_view(request, cita_id):
+#     cita = get_object_or_404(Cita, pk=cita_id)
+
+#     # Solo el dueño (o admin) puede hacer check-in
+#     if request.session.get("codigo_rol") != "003" and request.session.get("entidad_id") != cita.paciente_id:
+#         messages.error(request, "No puedes hacer check-in para esta cita.")
+#         return redirect('lista_citas_paciente', paciente_id=request.session.get("entidad_id"))
+
+#     # Ventana T-30 min
+#     h = cita.doctor_horario.horario
+#     inicio_dt = timezone.make_aware(timezone.datetime.combine(h.fecha, h.hora_inicio))
+#     if timezone.now() < inicio_dt - timedelta(minutes=30):
+#         print("El check-in aún no está disponible para esta cita.")
+#         messages.warning(request, "El check-in aún no está disponible para esta cita.")
+#         return redirect('lista_citas_paciente', paciente_id=cita.paciente_id)
+
+#     services.registrar_checkin(cita)
+    # return render(request, 'citas/checkin_exitoso.html', {'cita': cita})

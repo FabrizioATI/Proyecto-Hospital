@@ -63,27 +63,6 @@
               {% if errors.doctor_horario %}<small class="text-danger">{{ errors.doctor_horario }}</small>{% endif %}
             </div>
 
-            <!-- Motivo -->
-            <div class="form-group mb-3">
-              <label>Motivo</label>
-              <textarea name="motivo" class="form-control"></textarea>
-              {% if errors.motivo %}<small class="text-danger">{{ errors.motivo }}</small>{% endif %}
-            </div>
-
-            <!-- Tipo de Cita -->
-            <div class="form-group mb-3">
-              <label>Tipo de Cita</label>
-              <select name="tipo_cita" class="form-control">
-                <option value="">-- Seleccione tipo de cita --</option>
-                {% for t in tipos_cita %}
-                  <option value="{{ t.id }}">{{ t.nombre }}</option>
-                  {% endfor %}
-              </select>
-              {% if errors.tipo_cita %}
-                <small class="text-danger">{{ errors.tipo_cita }}</small>
-              {% endif %}
-            </div>
-
             <!-- Modalidad -->
             <div class="form-group mb-3">
               <label>Modalidad</label>
@@ -96,7 +75,14 @@
                 <small class="text-danger">{{ errors.tipo }}</small>
               {% endif %}
             </div>
-            
+
+            <!-- Motivo -->
+            <div class="form-group mb-3">
+              <label>Motivo</label>
+              <textarea name="motivo" class="form-control"></textarea>
+              {% if errors.motivo %}<small class="text-danger">{{ errors.motivo }}</small>{% endif %}
+            </div>
+
             <button type="submit" class="btn btn-primary">Registrar</button>
             <a href="{% url 'lista_citas_paciente' request.session.entidad_id %}" class="btn btn-secondary">Cancelar</a>
             

@@ -10,7 +10,7 @@
       <div class="collapse navbar-collapse" id="sidenav-collapse-main">
         <ul class="navbar-nav">
 
-          {% if request.session.rol_id == 1 %}
+          {% if request.session.codigo_rol == "001" %}
           <!-- Menú para Doctor -->
           <li class="nav-item">
             <a class="nav-link {% if segment == 'horarios' %} active {% endif %}"
@@ -27,7 +27,7 @@
             </a>
           </li>
 
-          {% elif request.session.rol_id == 2 %}
+          {% elif request.session.codigo_rol == "002" %}
           <!-- Menú para Paciente -->
           <li class="nav-item">
             <a class="nav-link {% if 'citas' in segment %} active {% endif %}"

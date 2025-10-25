@@ -4,7 +4,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from database.models import DoctorDetalle, Horario, DoctorHorario, Holiday
 
-
 #Index
 def index(request):
     return render(request, "home/index.html")
@@ -28,26 +27,35 @@ def holidays_json(request):
     iso_dates = [d.isoformat() for d in fechas]
     return JsonResponse(iso_dates, safe=False)
 
+# Helper
+def _doctor_de_sesion(request):
+    entidad_id = request.session.get("entidad_id")
+    if not entidad_id:
+        return None
+    return DoctorDetalle.objects.select_related("entidad", "especialidad").filter(entidad_id=entidad_id).first()
+
 #CRUD Horario Medico
 def lista_horarios_medico(request):
     # Trae todos los horarios con sus doctores
-    horarios = DoctorHorario.objects.select_related('doctor', 'horario').order_by('horario__fecha', 'horario__hora_inicio')
-    return render(request, 'doctor_horario/lista_horario_medicos.html', {'horarios': horarios})
+    doctor_sesion = _doctor_de_sesion(request)
+    horarios = (DoctorHorario.objects.select_related("doctor", "horario").filter(doctor=doctor_sesion).order_by("horario__fecha", "horario__hora_inicio"))
+    return render(request, 'doctor_horario/lista_horario_medicos.html', {'horarios': horarios, "doctor_sesion": doctor_sesion})
 
 def registrar_horario_medico(request):
-    doctores = DoctorDetalle.objects.all()
+    doctor_sesion = _doctor_de_sesion(request)
+
     time_slots = build_time_slots("06:00", "22:00", 30)
-    errors = {}
-    info = {}
+    errors, info = {}, {}
 
     if request.method == "POST":
-        doctor_id = request.POST.get("doctor")
+        # 2) IGNORAR el doctor enviado por el form: usar SIEMPRE el doctor en sesión
+        doctor_id = doctor_sesion.id
+
         fecha_str = request.POST.get("fecha")
         hi_str = request.POST.get("hora_inicio")
         hf_str = request.POST.get("hora_fin")
 
-        # Validaciones básicas
-        if not all([doctor_id, fecha_str, hi_str, hf_str]):
+        if not all([fecha_str, hi_str, hf_str]):
             errors["form"] = "Completa todos los campos."
         else:
             try:
@@ -60,7 +68,6 @@ def registrar_horario_medico(request):
         if not errors:
             if hi >= hf:
                 errors["rango"] = "La hora fin debe ser mayor que la hora inicio."
-            # Solo :00 o :30
             if hi.minute not in (0, 30) or hf.minute not in (0, 30):
                 errors["paso"] = "Usa intervalos de 30 minutos (:00 o :30)."
 
@@ -68,9 +75,7 @@ def registrar_horario_medico(request):
             start_dt = datetime.combine(fecha, hi)
             end_dt = datetime.combine(fecha, hf)
 
-            conflictos = []
-            creados = 0
-
+            conflictos, creados = [], 0
             try:
                 with transaction.atomic():
                     while start_dt < end_dt:
@@ -78,7 +83,6 @@ def registrar_horario_medico(request):
                         slot_end_dt = start_dt + timedelta(minutes=30)
                         slot_end = slot_end_dt.time()
 
-                        # Chequea traslape: (nuevo_inicio < existente_fin) y (nuevo_fin > existente_inicio)
                         existe = DoctorHorario.objects.filter(
                             doctor_id=doctor_id,
                             horario__fecha=fecha,
@@ -89,11 +93,7 @@ def registrar_horario_medico(request):
                         if existe:
                             conflictos.append(f"{slot_start.strftime('%H:%M')}–{slot_end.strftime('%H:%M')}")
                         else:
-                            h = Horario.objects.create(
-                                fecha=fecha,
-                                hora_inicio=slot_start,
-                                hora_fin=slot_end
-                            )
+                            h = Horario.objects.create(fecha=fecha, hora_inicio=slot_start, hora_fin=slot_end)
                             DoctorHorario.objects.create(doctor_id=doctor_id, horario=h)
                             creados += 1
 
@@ -107,11 +107,11 @@ def registrar_horario_medico(request):
                 info["parcial"] = f"Se crearon {creados} turnos. Estos chocaron y no se crearon: " + ", ".join(conflictos)
                 return redirect("lista_horarios_medico")
             else:
-                # todo ok, sin conflictos
                 return redirect("lista_horarios_medico")
 
+    # 3) en el contexto enviamos SOLO el doctor de sesión
     return render(request, "doctor_horario/registrar_horario_medicos.html", {
-        "doctores": doctores,
+        "doctor_sesion": doctor_sesion,
         "errors": errors,
         "info": info,
         "time_slots": time_slots
