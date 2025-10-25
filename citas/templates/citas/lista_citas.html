@@ -22,11 +22,17 @@
             <table class="table table-striped align-middle">
               <thead class="table-dark">
                 <tr>
-                  <th>Paciente</th>
-                  <th>Doctor</th>
+                  {% if tipo_usuario == 'doctor' %}
+                    <th>Paciente</th>
+                  {% else %}
+                    <th>Doctor</th>
+                  {% endif %}
+                  <th>Especialidad</th>
                   <th>Fecha</th>
                   <th>Hora Inicio</th>
                   <th>Hora Fin</th>
+                  <th>Tipo de Cita</th>
+                  <th>Modalidad</th>
                   <th>Estado</th>
                   <th>Motivo</th>
 
@@ -39,12 +45,21 @@
               <tbody>
                 {% for c in citas %}
                 <tr>
-                  <td>{{ c.paciente.nombre }} {{ c.paciente.apellidoPaterno }}</td>
-                  <td>{{ c.doctor_horario.doctor.entidad.nombre }} ({{ c.doctor_horario.doctor.especialidad.nombre }})</td>
+                  {% if tipo_usuario == 'doctor' %}
+                    <td>{{ c.paciente.nombre }} {{ c.paciente.apellidoPaterno }}</td>
+                  {% else %}
+                    <td>{{ c.doctor_horario.doctor.entidad.nombre }} {{ c.doctor_horario.doctor.entidad.apellidoPaterno }}</td>
+                  {% endif %}
+                  <td>{{ c.doctor_horario.doctor.especialidad.nombre }}</td>
                   <td>{{ c.doctor_horario.horario.fecha|date:"d/m/Y" }}</td>
                   <td>{{ c.doctor_horario.horario.hora_inicio|time:"h:i a" }}</td>
                   <td>{{ c.doctor_horario.horario.hora_fin|time:"h:i a" }}</td>
-                  <td>{{ c.estado }}</td>
+
+                  <!-- 🔹 Nuevos campos -->
+                  <td>{{ c.tipo_cita.nombre }}</td>
+                  <td>{{ c.get_tipo_display }}</td>
+
+                  <td>{{ c.estado|title }}</td>
                   <td>{{ c.motivo }}</td>
 
                   {% if tipo_usuario != 'doctor' %}
@@ -57,7 +72,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="{% if tipo_usuario == 'doctor' %}7{% else %}8{% endif %}" class="text-center text-muted">
+                  <td colspan="{% if tipo_usuario == 'doctor' %}9{% else %}10{% endif %}" class="text-center text-muted">
                     No hay citas registradas
                   </td>
                 </tr>

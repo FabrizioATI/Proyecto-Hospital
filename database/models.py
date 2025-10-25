@@ -83,10 +83,16 @@ class Holiday(models.Model):
     def __str__(self):
         return f"{self.fecha} - {self.nombre or 'Feriado'}"
 
+class TipoCita(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
 
 class Cita(models.Model):
     paciente = models.ForeignKey(Entidad, on_delete=models.CASCADE, related_name="citas")
     doctor_horario = models.ForeignKey(DoctorHorario, on_delete=models.CASCADE)
+    tipo_cita = models.ForeignKey(TipoCita, on_delete=models.SET_NULL, null=True, blank=True)  
     estado = models.CharField(
         max_length=20,
         choices=[
@@ -97,7 +103,7 @@ class Cita(models.Model):
         ],
         default="pendiente"
     )
-    tipo = models.CharField(
+    tipo = models.CharField(   
         max_length=20,
         choices=[
             ("presencial", "Presencial"),
