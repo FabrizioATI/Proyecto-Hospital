@@ -111,6 +111,9 @@ class Cita(models.Model):
     )
     motivo = models.TextField()
 
+    # Nuevo campo para vinculación EHR
+    ehr_id = models.CharField(max_length=50, blank=True, null=True)
+
     def __str__(self):
         return f"Cita {self.id} - {self.paciente} con {self.doctor_horario.doctor}"
     
