@@ -11,17 +11,18 @@
         </div>
         <div class="card-body">
 
-          <!-- FORMULARIO GET PARA FILTROS -->
+          <!-- FORMULARIO GET (filtros) -->
           <form method="get" class="mb-4">
+
             <!-- Especialidad -->
             <div class="form-group mb-3">
               <label>Especialidad</label>
               <select name="especialidad" class="form-control" onchange="this.form.submit()">
                 <option value="">-- Seleccione especialidad --</option>
                 {% for esp in especialidades %}
-                  <option value="{{ esp.id }}"{% if esp.id == selected_esp %} selected{% endif %}>
-                    {{ esp.nombre }}
-                  </option>
+                <option value="{{ esp.id }}" {% if esp.id==selected_esp %} selected{% endif %}>
+                  {{ esp.nombre }}
+                </option>
                 {% endfor %}
               </select>
             </div>
@@ -29,65 +30,89 @@
             <!-- Doctor -->
             <div class="form-group mb-3">
               <label>Doctor</label>
-              <select name="doctor" class="form-control" {% if not doctores %}disabled{% endif %} onchange="this.form.submit()">
+              <select name="doctor" class="form-control" {% if not doctores %}disabled{% endif %}
+                onchange="this.form.submit()">
                 <option value="">-- Seleccione doctor --</option>
                 {% for doc in doctores %}
-                  <option value="{{ doc.id }}"{% if doc.id == selected_doc %} selected{% endif %}>
-                    {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }}
-                  </option>
+                <option value="{{ doc.id }}" {% if doc.id==selected_doc %} selected{% endif %}>
+                  Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
+                  ({{ doc.especialidad.nombre }})
+                </option>
                 {% endfor %}
               </select>
             </div>
+
           </form>
 
-          <!-- FORMULARIO POST PARA REGISTRAR CITA -->
+          <!-- INFO DOCTOR SELECCIONADO -->
+          {% if selected_doc %}
+          <div class="alert alert-info">
+            {% for doc in doctores %}
+            {% if doc.id == selected_doc %}
+            <strong>Doctor seleccionado:</strong>
+            Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
+            – {{ doc.especialidad.nombre }}
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-warning">
+            Selecciona una especialidad y un doctor antes de registrar la cita.
+          </div>
+          {% endif %}
+
+          <!-- FORMULARIO POST (cita) -->
           <form method="post">
             {% csrf_token %}
 
-            <!-- Horario -->
+            {% if selected_doc %}
+            <input type="hidden" name="doctor_id" value="{{ selected_doc }}">
+            {% endif %}
+
+            <!-- Clasificación -->
             <div class="form-group mb-3">
-              <label>Horario</label>
-              <select name="doctor_horario" class="form-control" {% if not horarios %}disabled{% endif %}>
-                <option value="">-- Seleccione horario --</option>
-                {% for h in horarios %}
-                  <option value="{{ h.id }}">
-                    {{ h.horario.fecha|date:"Y/m/d" }}
-                    {{ h.horario.hora_inicio|time:"h:i A" }} - {{ h.horario.hora_fin|time:"h:i A" }}
-                    {% if h.ocupado %} (Ocupado – se te añadirá a la lista de espera){% endif %}
-                  </option>
-                {% endfor %}
+              <label>Clasificación</label>
+              <select name="clasificacion" class="form-control" required>
+                <option value="EMERGENCIA">Emergencia</option>
+                <option value="ADULTO_MAYOR">Adulto mayor</option>
+                <option value="REGULAR" selected>Regular</option>
               </select>
-              <small class="form-text text-muted">
-                Si eliges un horario marcado como “Ocupado”, el sistema te añadirá automáticamente a la lista de espera para ese turno.
-              </small>
-              {% if errors.doctor_horario %}<small class="text-danger">{{ errors.doctor_horario }}</small>{% endif %}
+              {% if errors.clasificacion %}
+              <small class="text-danger">{{ errors.clasificacion }}</small>
+              {% endif %}
             </div>
 
-            <!-- Modalidad -->
+            <!-- Tipo de cita-->
             <div class="form-group mb-3">
-              <label>Modalidad</label>
-              <select name="tipo" class="form-control">
-                <option value="">-- Seleccione modalidad --</option>
-                <option value="presencial">Presencial</option>
-                <option value="virtual">Virtual</option>
+              <label>Tipo de cita</label>
+              <select name="tipo_cita" class="form-control" required>
+                <option value="PRESENCIAL" selected>Presencial</option>
+                <option value="VIRTUAL">Virtual</option>
               </select>
-              {% if errors.tipo %}
-                <small class="text-danger">{{ errors.tipo }}</small>
+              {% if errors.tipo_cita %}
+              <small class="text-danger">{{ errors.tipo_cita }}</small>
               {% endif %}
             </div>
 
             <!-- Motivo -->
             <div class="form-group mb-3">
               <label>Motivo</label>
-              <textarea name="motivo" class="form-control"></textarea>
-              {% if errors.motivo %}<small class="text-danger">{{ errors.motivo }}</small>{% endif %}
+              <textarea name="motivo" class="form-control" rows="3" required></textarea>
+              {% if errors.motivo %}
+              <small class="text-danger">{{ errors.motivo }}</small>
+              {% endif %}
             </div>
 
-            <button type="submit" class="btn btn-primary">Registrar</button>
-            <a href="{% url 'lista_citas_paciente' request.session.entidad_id %}" class="btn btn-secondary">Cancelar</a>
-            
+            <!-- Botones -->
+            <button type="submit" class="btn btn-primary" {% if not selected_doc %}disabled{% endif %}>
+              Registrar Cita
+            </button>
+            <a href="{% url 'lista_citas_paciente' request.session.entidad_id %}" class="btn btn-secondary">
+              Cancelar
+            </a>
+
           </form>
-          
+
         </div>
       </div>
     </div>

@@ -1,96 +1,204 @@
-from django.db import transaction
 from django.utils import timezone
-from datetime import timedelta
-from database.models import Cita, WaitlistItem, CheckIn
+from django.db import transaction
+from django.db.models import Q
+from database.models import (
+    Cita,
+    WaitlistItem,
+    DoctorDetalle,
+    DoctorHorario,
+)
 
-def hay_cupo_en_slot(doctor_horario) -> bool:
-    # Hay cupo si NO existe una cita activa en ese slot
-    return not Cita.objects.filter(doctor_horario=doctor_horario, estado__in=['pendiente', 'confirmada']).exists()
+PRIORIDAD_MAP = {
+    'EMERGENCIA': 1,
+    'ADULTO_MAYOR': 2,
+    'REGULAR': 3,
+}
 
-@transaction.atomic
-def reservar_o_waitlist(paciente, doctor_horario) -> Cita | WaitlistItem:
+
+def get_doctores_con_horario(especialidad_id):
     """
-    Si hay cupo crea Cita(pendiente). Si no, añade a Waitlist.
+    Devuelve doctores de una especialidad que tengan horarios futuros configurados.
     """
-    if hay_cupo_en_slot(doctor_horario):
-        return Cita.objects.create(paciente=paciente, doctor_horario=doctor_horario, estado='pendiente')
-    else:
-        item, created = WaitlistItem.objects.get_or_create(
-        paciente=paciente, doctor_horario=doctor_horario,
-        defaults={'estado': 'pendiente'}
+    hoy = timezone.now().date()
+    if not especialidad_id:
+        return DoctorDetalle.objects.none()
+
+    return (
+        DoctorDetalle.objects
+        .filter(
+            especialidad_id=especialidad_id,
+            doctorhorario__horario__fecha__gte=hoy,
         )
-        return item
-
-@transaction.atomic
-def cancelar_y_ofertar(cita: Cita) -> WaitlistItem | None:
-    """
-    Cancela una cita y ofrece el cupo al primero de la lista de espera.
-    """
-    cita.estado = 'cancelada'
-    cita.save(update_fields=['estado'])
-
-    next_wait = WaitlistItem.objects.filter(
-    doctor_horario=cita.doctor_horario, estado='pendiente'
-    ).order_by('fecha_solicitud').first()
-
-    if next_wait:
-        # Marcar notificado (se debe enviar mensaje fuera de la transacción)
-        next_wait.estado = 'notificado'
-        next_wait.save(update_fields=['estado'])
-        return next_wait
-    return None
-
-@transaction.atomic
-def aceptar_oferta_waitlist(wait_item: WaitlistItem) -> Cita:
-    """Convierte el cupo en una Cita pendiente y marca el ítem como aceptado."""
-    if not hay_cupo_en_slot(wait_item.doctor_horario):
-        raise ValueError('El cupo ya no está disponible')
-    cita = Cita.objects.create(
-        paciente=wait_item.paciente,
-        doctor_horario=wait_item.doctor_horario,
-        estado='pendiente'
+        .select_related("entidad", "especialidad")
+        .distinct()
     )
-    wait_item.estado = 'aceptado'
-    wait_item.save(update_fields=['estado'])
-    return cita
+
+
+def _get_prioridad_num(clasificacion):
+    return PRIORIDAD_MAP.get(clasificacion, 3)
+
 
 @transaction.atomic
-def registrar_checkin(cita: Cita) -> CheckIn:
-    """Coloca al paciente en la cola de llegada y confirma la cita si estaba pendiente."""
-    checkin, created = CheckIn.objects.get_or_create(cita=cita, defaults={'estado': 'en_espera'})
-    if cita.estado == 'pendiente':
-        cita.estado = 'confirmada'
-        cita.save(update_fields=['estado'])
-    return checkin
-
-@transaction.atomic
-def tomar_siguiente_para_atender(doctor) -> CheckIn | None:
+def solicitar_cita(paciente, doctor_detalle, clasificacion, motivo):
     """
-    Toma el siguiente check-in para un doctor (por sus slots actuales).
-    Orden: hora_llegada ASC, pero puedes priorizar por hora de cita.
+    1. Registra la solicitud en la waitlist (sin horario).
+    2. Lanza el motor de colas para ese doctor.
     """
-    qs = CheckIn.objects.select_related('cita', 'cita__doctor_horario') \
-        .filter(cita__doctor_horario__doctor=doctor, estado='en_espera') \
-        .order_by('hora_llegada')
+    wait_item = WaitlistItem.objects.create(
+        paciente=paciente,
+        doctor_horario=None,
+        motivo=motivo,
+        clasificacion=clasificacion,
+    )
 
-    nxt = qs.first()
-    if nxt:
-        nxt.estado = 'atendiendo'
-        nxt.save(update_fields=['estado'])
-    return nxt
+    procesar_cola_doctor(doctor_detalle)
 
-@transaction.atomic
-def finalizar_atencion(checkin: CheckIn):
-    checkin.estado = 'atendido'
-    checkin.save(update_fields=['estado'])
+    return wait_item
+
 
 @transaction.atomic
-def marcar_no_show_si_corresponde(cita: Cita, umbral_min=15) -> bool:
-    """Marca no_show si pasó la hora de cita + umbral y no hay check-in."""
-    hora_cita = cita.doctor_horario.horario.hora_inicio # Ajusta según tu modelo real
-    if timezone.now() >= (hora_cita + timedelta(minutes=umbral_min)):
-        if not hasattr(cita, 'checkin'):
-            # No se presentó
-            Cita.objects.filter(pk=cita.pk).update(estado='cancelada')
-            return True
-    return False
+def procesar_cola_doctor(doctor_detalle: DoctorDetalle):
+    """
+    Reordena y reasigna TODOS los horarios del doctor según la cola y prioridad.
+    Si entra una emergencia, se mueve al primer turno disponible.
+    """
+
+    hoy = timezone.now().date()
+
+    # 1. Horarios futuros del doctor
+    horarios = list(
+        DoctorHorario.objects
+        .select_related('horario')
+        .filter(doctor=doctor_detalle, horario__fecha__gte=hoy)
+        .order_by('horario__fecha', 'horario__hora_inicio')
+    )
+
+    if not horarios:
+        return  # no hay horarios → todos quedan en waitlist sin horario
+
+    # 2. Items de la waitlist relevantes (pendientes/aceptados)
+    items = list(
+        WaitlistItem.objects
+        .select_related('paciente', 'doctor_horario')
+        .filter(
+            estado__in=['pendiente', 'aceptado'],
+        )
+        .order_by('fecha_solicitud')
+    )
+
+    # Orden por prioridad y luego por antigüedad
+    items.sort(key=lambda i: (_get_prioridad_num(i.clasificacion), i.fecha_solicitud))
+
+    # 3. Emparejar items con horarios
+    for idx, horario in enumerate(horarios):
+        if idx >= len(items):
+            break
+
+        item = items[idx]
+        item.doctor_horario = horario
+        item.estado = 'aceptado'
+        item.save()
+
+        Cita.objects.update_or_create(
+            paciente=item.paciente,
+            doctor_horario=horario,
+            defaults={
+                "doctor": doctor_detalle.entidad,
+                "motivo": item.motivo,
+                "clasificacion": item.clasificacion,
+                "estado": "EN_ESPERA",
+            }
+        )
+
+    # 4. Resto se queda sin horario (cola pura)
+    for item in items[len(horarios):]:
+        # Si antes tenía un horario asignado, cancelamos esa cita
+        if item.doctor_horario:
+            Cita.objects.filter(
+                paciente=item.paciente,
+                doctor_horario=item.doctor_horario,
+                estado="EN_ESPERA",   # solo las que aún no se atendieron
+            ).update(estado="CANCELADA")
+
+        # Lo devolvemos a la cola pura (sin horario)
+        item.doctor_horario = None
+        item.estado = 'pendiente'
+        item.save()
+        
+@transaction.atomic
+def cancelar_y_ofertar(cita: Cita):
+    # 1) Cancelar la cita actual
+    cita.estado = "CANCELADA"
+    cita.save()
+
+    horario_libre = cita.doctor_horario
+    if not horario_libre:
+        return None
+
+    doctor_detalle = horario_libre.doctor
+
+    qs = (
+        WaitlistItem.objects
+        .select_related("paciente", "doctor_horario")
+        .filter(estado="pendiente")
+        .filter(
+            Q(doctor_horario__doctor=doctor_detalle) | Q(doctor_horario__isnull=True)
+        )
+    )
+    if not qs.exists():
+        return None
+
+    candidatos = list(qs)
+    candidatos.sort(key=lambda i: (_get_prioridad_num(i.clasificacion), i.fecha_solicitud))
+
+    next_wait = candidatos[0]
+
+    # Asignar horario y marcar como aceptado (si no quieres paso de confirmación)
+    next_wait.doctor_horario = horario_libre
+    next_wait.estado = "aceptado"   # o "notificado" si igual quieres confirmación
+    next_wait.save()
+
+    # 👉 Crear / actualizar la Cita para este paciente
+    Cita.objects.update_or_create(
+        paciente=next_wait.paciente,
+        doctor_horario=horario_libre,
+        defaults={
+            "doctor": doctor_detalle.entidad,
+            "motivo": next_wait.motivo,
+            "clasificacion": next_wait.clasificacion,
+            "estado": "EN_ESPERA",
+        },
+    )
+
+    return next_wait
+
+@transaction.atomic
+def liberar_horario(doctor_horario: DoctorHorario):
+    """
+    Elimina un DoctorHorario de forma segura:
+    - Citas EN_ESPERA con ese horario → CANCELADA
+    - Items de waitlist vinculados a ese horario → vuelven a 'pendiente' sin horario
+    - Borra el horario y la relación
+    - Reprocesa la cola del doctor por si puede reasignar a otros horarios
+    """
+    doctor_detalle = doctor_horario.doctor
+    horario = doctor_horario.horario
+
+    # 1) Citas que usan este horario → CANCELADA (solo las aún no atendidas)
+    Cita.objects.filter(
+        doctor_horario=doctor_horario,
+        estado="EN_ESPERA",
+    ).update(estado="CANCELADA")
+
+    # 2) Waitlist: volver a cola pura
+    for item in WaitlistItem.objects.filter(doctor_horario=doctor_horario):
+        item.doctor_horario = None
+        item.estado = "pendiente"
+        item.save()
+
+    # 3) Eliminar horario y relación
+    doctor_horario.delete()
+    horario.delete()
+
+    # 4) Reprocesar cola con los horarios restantes
+    procesar_cola_doctor(doctor_detalle)

@@ -3,6 +3,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from database.models import DoctorDetalle, Horario, DoctorHorario, Holiday
+from citas.services import procesar_cola_doctor, liberar_horario
 
 #Index
 def index(request):
@@ -103,10 +104,15 @@ def registrar_horario_medico(request):
 
             if conflictos and not creados:
                 errors["conflictos"] = "Ya existen turnos que chocan: " + ", ".join(conflictos)
-            elif conflictos and creados:
-                info["parcial"] = f"Se crearon {creados} turnos. Estos chocaron y no se crearon: " + ", ".join(conflictos)
-                return redirect("lista_horarios_medico")
             else:
+                procesar_cola_doctor(doctor_sesion)
+
+                if conflictos and creados:
+                    info["parcial"] = (
+                        f"Se crearon {creados} turnos. "
+                        "Estos chocaron y no se crearon: " + ", ".join(conflictos)
+                    )
+
                 return redirect("lista_horarios_medico")
 
     # 3) en el contexto enviamos SOLO el doctor de sesión
@@ -153,7 +159,7 @@ def editar_horario_medico(request, pk):
 
 def eliminar_horario_medico(request, pk):
     doctor_horario = get_object_or_404(DoctorHorario, pk=pk)
-    horario = doctor_horario.horario  # Obtenemos el Horario asociado
-    doctor_horario.delete()           # Eliminamos la relación
-    horario.delete()                   # Eliminamos el horario en sí
+
+    liberar_horario(doctor_horario)
+
     return redirect("lista_horarios_medico")

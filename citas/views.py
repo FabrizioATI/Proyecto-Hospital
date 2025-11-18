@@ -1,14 +1,19 @@
-from django.db import transaction, IntegrityError
-from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
-from django.db.models import Exists, OuterRef, Q
+
 from django.shortcuts import render, redirect, get_object_or_404
-from database.models import Entidad, Especialidad, DoctorDetalle, DoctorHorario, Cita, WaitlistItem, CheckIn
+from database.models import Entidad, Especialidad, DoctorDetalle, DoctorHorario, Cita, WaitlistItem
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from . import services
-from .notifier import send_waitlist_offer_test
+from .notifier import send_waitlist_offer_email_test
 from django.utils.safestring import mark_safe
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .services import solicitar_cita, get_doctores_con_horario
+from database.models import (
+    Entidad, Especialidad, DoctorDetalle,
+    DoctorHorario, Cita, WaitlistItem
+)
 
 
 #Index
@@ -27,102 +32,75 @@ def registrar_cita_paciente(request, paciente_id):
     paciente = get_object_or_404(Entidad, id=paciente_id)
     errors = {}
 
-    especialidad_id = request.GET.get("especialidad")
-    doctor_id = request.GET.get("doctor")
-
-    if request.method == "POST":
-        doctor_horario_id = request.POST.get("doctor_horario")
-        motivo = request.POST.get("motivo")
-
-        if not doctor_horario_id:
-            errors["doctor_horario"] = "Debe seleccionar un horario de doctor."
-        if not motivo:
-            errors["motivo"] = "Debe ingresar un motivo."
-
-        if not errors:
-            try:
-                with transaction.atomic():
-                    # ¿El slot ya está ocupado por una cita activa?
-                    ocupado = Cita.objects.filter(
-                        doctor_horario_id=doctor_horario_id,
-                        estado__in=["pendiente", "confirmada"],
-                    ).exists()
-
-                    doctor_horario = DoctorHorario.objects.get(id=doctor_horario_id)
-
-                    if ocupado:
-                        # 👉 En vez de error, envia a LISTA DE ESPERA
-                        wait_item, _created = WaitlistItem.objects.get_or_create(
-                            paciente=paciente,
-                            doctor_horario=doctor_horario,
-                            defaults={"estado": "pendiente"},
-                        )
-                        messages.info(
-                            request,
-                            "No hay cupo en ese horario. Te añadimos a la lista de espera."
-                        )
-                        return redirect("lista_citas_paciente", paciente_id=paciente_id)
-                    else:
-                        # Hay cupo: crea la cita pendiente
-                        Cita.objects.create(
-                            paciente=paciente,
-                            doctor_horario=doctor_horario,
-                            motivo=motivo,
-                            estado="pendiente",
-                        )
-                        messages.success(request, "Cita registrada.")
-                        return redirect("lista_citas_paciente", paciente_id=paciente_id)
-
-            except IntegrityError:
-                # Carrera: dos formularios al mismo tiempo. Fallback a waitlist.
-                try:
-                    doctor_horario = DoctorHorario.objects.get(id=doctor_horario_id)
-                    WaitlistItem.objects.get_or_create(
-                        paciente=paciente,
-                        doctor_horario=doctor_horario,
-                        defaults={"estado": "pendiente"},
-                    )
-                    messages.info(
-                        request,
-                        "Ese horario se tomó al mismo tiempo. Te añadimos a la lista de espera."
-                    )
-                    return redirect("lista_citas_paciente", paciente_id=paciente_id)
-                except Exception:
-                    errors["doctor_horario"] = "Ese horario ya fue tomado por otro paciente."
-
-    # GET: filtros y armado de combos
     especialidades = Especialidad.objects.all()
+
+    especialidad_id = request.GET.get("especialidad")
+    selected_doc = request.GET.get("doctor")
 
     doctores = (
         DoctorDetalle.objects.filter(especialidad_id=especialidad_id)
         if especialidad_id else []
     )
 
-    # Anotar si el horario está ocupado para deshabilitarlo en el select
-    horarios = []
-    if doctor_id:
+    if request.method == "POST":
+        doctor_id = request.POST.get("doctor_id")
+        clasificacion = request.POST.get("clasificacion")
+        motivo = request.POST.get("motivo")
+
+        doctor = get_object_or_404(Entidad, id=doctor_id)
+
         horarios = (
             DoctorHorario.objects
-            .filter(doctor_id=doctor_id)
+            .filter(doctor__entidad_id=doctor_id)
             .select_related("horario")
-            .annotate(
-                ocupado=Exists(
-                    Cita.objects.filter(
-                        doctor_horario=OuterRef("pk"),
-                        estado__in=["pendiente", "confirmada"]
-                    )
-                )
-            )
+            .order_by("horario__fecha", "horario__hora_inicio")
         )
 
+        # buscar primer horario libre
+        horario_asignado = None
+        for h in horarios:
+            if not Cita.objects.filter(
+                doctor_horario=h,
+                estado__in=["pendiente", "confirmada"]
+            ).exists():
+                horario_asignado = h
+                break
+
+        if not horario_asignado:
+
+            # si el doctor NO tiene horarios creados
+            if not horarios.exists():
+                messages.error(request, "El doctor no tiene horarios configurados.")
+                return redirect("registrar_cita_paciente", paciente_id)
+
+            # Enviar a la cola WAITLIST según prioridad
+            WaitlistItem.objects.get_or_create(
+                paciente=paciente,
+                doctor_horario=horarios.first()
+            )
+
+            messages.info(request, "Has sido añadido a la lista de espera.")
+            return redirect("lista_citas_paciente", paciente_id)
+
+        # Crear cita normal
+        cita = Cita.objects.create(
+            paciente=paciente,
+            doctor=doctor,
+            doctor_horario=horario_asignado,
+            motivo=motivo,
+            clasificacion=clasificacion
+        )
+
+        messages.success(request, "Cita registrada correctamente.")
+        return redirect("lista_citas_paciente", paciente_id)
+
     return render(request, "citas/registrar_cita.html", {
-        "paciente": paciente,
         "especialidades": especialidades,
+        "paciente": paciente,
         "doctores": doctores,
-        "horarios": horarios,
         "errors": errors,
         "selected_esp": int(especialidad_id) if especialidad_id else None,
-        "selected_doc": int(doctor_id) if doctor_id else None,
+        "selected_doc": int(selected_doc) if selected_doc else None,
     })
 
 def editar_cita_paciente(request, paciente_id, pk):
@@ -168,101 +146,95 @@ def lista_citas_doctor(request, doctor_id):
         "tipo_usuario": "doctor"
     })
 
-def checkin_view(request, cita_id):
-    cita = get_object_or_404(Cita, pk=cita_id)
-    services.registrar_checkin(cita)
-    return render(request, 'citas/checkin_exitoso.html', {'cita': cita})
-
 def cancelar_cita_view(request, cita_id):
     cita = get_object_or_404(Cita, pk=cita_id)
-    next_wait = services.cancelar_y_ofertar(cita)
-    if next_wait:
-        accept_url = request.build_absolute_uri(
-            reverse('aceptar_waitlist', args=[next_wait.id])
-        )
-        wa_url = send_waitlist_offer_test(next_wait, accept_url)
-        print("-->LINK DE WHATSAPP: ",wa_url)
-        messages.info(
-            request,
-            mark_safe(
-                'Se ha ofrecido el cupo al siguiente en lista de espera. '
-                f'<a class="btn btn-sm btn-success ms-2" href="{wa_url}" target="_blank" rel="noopener">Enviar WhatsApp de prueba</a>'
-            )
-        )
-    else:
-        messages.info(request, 'Cita cancelada y sin lista de espera pendiente.')
+    services.cancelar_y_ofertar(cita)
+
+    # if next_wait:
+    #     accept_url = request.build_absolute_uri(
+    #         reverse('aceptar_waitlist', args=[next_wait.id])
+    #     )
+
+    #     resultado = send_waitlist_offer_email_test(next_wait, accept_url)
+    #     print("-->RESULTADO EMAIL: ", resultado)
+
+    #     messages.info(
+    #         request,
+    #         mark_safe(
+    #             'Se ha ofrecido el cupo al siguiente en lista de espera. '
+    #             '<br>Revisa la consola o el correo para verificar el envío de la notificación.'
+    #         )
+    #     )
+    # else:
+    #     messages.info(request, 'Cita cancelada y sin lista de espera pendiente.')
+
     return redirect('lista_citas_paciente', paciente_id=cita.paciente.id)
+ 
+def registrar_cita_paciente(request, paciente_id):
+    paciente = get_object_or_404(Entidad, id=paciente_id)
+    errors = {}
 
-def aceptar_waitlist_view(request, item_id):
-    item = get_object_or_404(WaitlistItem, pk=item_id)
-    try:
-        cita = services.aceptar_oferta_waitlist(item)
-        messages.success(request, 'Has aceptado el cupo. Cita creada.')
-        return redirect(reverse('citas:checkin', args=[cita.id]))
-    except Exception as e:
-        messages.error(request, f'No se pudo aceptar el cupo: {e}')
-        return redirect('/')
+    # ----------- GET: cargar combos --------------
+    especialidades = Especialidad.objects.all()
 
-def tablero_cola(request, doctor_id):
-    doctor = get_object_or_404(DoctorDetalle, pk=doctor_id)
-    en_espera = CheckIn.objects.select_related('cita', 'cita__paciente', 'cita__doctor_horario') \
-        .filter(cita__doctor_horario__doctor=doctor, estado='en_espera') \
-        .order_by('hora_llegada')
-    atendiendo = CheckIn.objects.select_related('cita').filter(cita__doctor_horario__doctor=doctor, estado='atendiendo')
-    atendidos = CheckIn.objects.select_related('cita').filter(cita__doctor_horario__doctor=doctor, estado='atendido').order_by('-hora_llegada')[:10]
+    especialidad_id = request.GET.get("especialidad")
+    selected_doc = request.GET.get("doctor")
 
+    doctores = (
+        get_doctores_con_horario(especialidad_id)
+        if especialidad_id else []
+    )
 
-    return render(request, 'citas/tablero_cola.html', {
-        'doctor': doctor,
-        'en_espera': en_espera,
-        'atendiendo': atendiendo,
-        'atendidos': atendidos,
+    # ----------- POST: registrar solicitud --------------
+    if request.method == "POST":
+
+        doctor_id = request.POST.get("doctor_id")       # aquí pondrás id de DoctorDetalle
+        clasificacion = request.POST.get("clasificacion") or "REGULAR"
+        tipo_cita = request.POST.get("tipo_cita") or "PRESENCIAL" 
+        motivo = request.POST.get("motivo")
+
+        if not doctor_id:
+            errors["doctor_id"] = "Debe seleccionar un médico."
+        if not motivo:
+            errors["motivo"] = "Debe ingresar un motivo."
+
+        if errors:
+            return render(request, "citas/registrar_cita.html", {
+                "especialidades": especialidades,
+                "paciente": paciente,
+                "doctores": doctores,
+                "errors": errors,
+                "selected_esp": especialidad_id,
+                "selected_doc": selected_doc,
+            })
+
+        # doctor_id es DoctorDetalle.id
+        doctor_detalle = get_object_or_404(DoctorDetalle, id=doctor_id)
+
+        # 1) Registrar en la waitlist
+        solicitar_cita(
+            paciente=paciente,
+            doctor_detalle=doctor_detalle,
+            clasificacion=clasificacion,
+            tipo_cita=tipo_cita,
+            motivo=motivo,
+        )
+
+        # 2) Mensaje
+        messages.success(
+            request,
+            "Tu solicitud de cita ha sido registrada. "
+            "El sistema asignará el horario automáticamente según tu prioridad."
+        )
+
+        return redirect("lista_citas_paciente", paciente_id=paciente_id)
+
+    # ----------- RENDER GET --------------
+    return render(request, "citas/registrar_cita.html", {
+        "especialidades": especialidades,
+        "paciente": paciente,
+        "doctores": doctores,
+        "errors": errors,
+        "selected_esp": int(especialidad_id) if especialidad_id else None,
+        "selected_doc": int(selected_doc) if selected_doc else None,
     })
-    
-signer = TimestampSigner(salt="waitlist-offer")
-
-def aceptar_waitlist_token_view(request, item_id, token):
-    # Validar token (expira según tu TTL)
-    try:
-        # reconstruir la firma completa: "<id>:<firma>"
-        signed_value = f"{item_id}:{token}"
-        unsigned = signer.unsign(signed_value, max_age=60*60)  # 60 min de validez por ejemplo
-        # opcional: también puedes verificar notificación vs TTL propio del item
-    except (BadSignature, SignatureExpired):
-        messages.error(request, "El enlace no es válido o ha expirado.")
-        return redirect('/')
-
-    wait_item = get_object_or_404(WaitlistItem, pk=item_id)
-
-    # (opcional) valida expire por TTL del item si tienes notificado_at
-    # if wait_item.notificado_at and timezone.now() > wait_item.notificado_at + timedelta(minutes=wait_item.ttl_respuesta_min):
-    #     messages.error(request, "El tiempo de respuesta expiró.")
-    #     return redirect('/')
-
-    try:
-        cita = services.aceptar_oferta_waitlist(wait_item)
-        messages.success(request, "Has aceptado el cupo. Cita creada.")
-        return redirect('citas:checkin', cita_id=cita.id)
-    except Exception as e:
-        messages.error(request, f"No se pudo aceptar el cupo: {e}")
-        return redirect('/')
-    
-    
-# def checkin_view(request, cita_id):
-#     cita = get_object_or_404(Cita, pk=cita_id)
-
-#     # Solo el dueño (o admin) puede hacer check-in
-#     if request.session.get("codigo_rol") != "003" and request.session.get("entidad_id") != cita.paciente_id:
-#         messages.error(request, "No puedes hacer check-in para esta cita.")
-#         return redirect('lista_citas_paciente', paciente_id=request.session.get("entidad_id"))
-
-#     # Ventana T-30 min
-#     h = cita.doctor_horario.horario
-#     inicio_dt = timezone.make_aware(timezone.datetime.combine(h.fecha, h.hora_inicio))
-#     if timezone.now() < inicio_dt - timedelta(minutes=30):
-#         print("El check-in aún no está disponible para esta cita.")
-#         messages.warning(request, "El check-in aún no está disponible para esta cita.")
-#         return redirect('lista_citas_paciente', paciente_id=cita.paciente_id)
-
-#     services.registrar_checkin(cita)
-    # return render(request, 'citas/checkin_exitoso.html', {'cita': cita})
