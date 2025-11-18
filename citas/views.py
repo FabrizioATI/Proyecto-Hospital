@@ -146,6 +146,30 @@ def lista_citas_doctor(request, doctor_id):
         "tipo_usuario": "doctor"
     })
 
+def checkin_view(request, cita_id):
+    cita = get_object_or_404(Cita, pk=cita_id)
+
+    # Registrar el check-in como antes
+    services.registrar_checkin(cita)
+
+    # Vincular con EHR (simulado)
+    if not cita.ehr_id:
+        ehr_id = f"EHR-{cita.paciente.dni}"
+        cita.ehr_id = ehr_id
+        cita.estado = "confirmada"  # marcamos la cita como confirmada al hacer check-in
+        cita.save()
+
+        messages.success(
+            request,
+            f"Cita vinculada exitosamente con el registro EHR del paciente: {ehr_id}"
+        )
+    else:
+        messages.info(request, f"La cita ya estaba vinculada con el ID EHR: {cita.ehr_id}")
+
+    # Mostrar resultado
+    return render(request, 'citas/checkin_exitoso.html', {'cita': cita})
+
+
 def cancelar_cita_view(request, cita_id):
     cita = get_object_or_404(Cita, pk=cita_id)
     services.cancelar_y_ofertar(cita)
