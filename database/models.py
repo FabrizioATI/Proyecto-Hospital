@@ -227,3 +227,86 @@ class Holiday(models.Model):
 
     def __str__(self):
         return f"{self.fecha} - {self.nombre or 'Feriado'}"
+
+class TipoCita(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
+class Cita(models.Model):
+    paciente = models.ForeignKey('Entidad', on_delete=models.CASCADE, related_name="citas")
+    doctor_horario = models.ForeignKey('DoctorHorario', on_delete=models.CASCADE, related_name="citas")
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ("pendiente", "Pendiente"),
+            ("confirmada", "Confirmada"),
+            ("cancelada", "Cancelada"),
+            ("atendida", "Atendida"),
+        ],
+        default="pendiente"
+    )
+    tipo = models.CharField(   
+        max_length=20,
+        choices=[("presencial", "Presencial"), ("virtual", "Virtual")],
+        default="presencial",
+        null=True,
+        blank=True,
+    )
+    motivo = models.TextField()
+
+    # Nuevo campo para vinculación EHR
+    ehr_id = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return f"Cita {self.id} - {self.paciente} con {self.doctor_horario.doctor}"
+    
+class WaitlistItem(models.Model):
+    ESTADOS = (
+    ('pendiente', 'Pendiente'),
+    ('notificado', 'Notificado'),
+    ('aceptado', 'Aceptado'),
+    ('expirado', 'Expirado'),
+    ('rechazado', 'Rechazado'),
+    )
+
+    paciente = models.ForeignKey(Entidad, on_delete=models.CASCADE, related_name='waitlist_items')
+    doctor_horario = models.ForeignKey(DoctorHorario, on_delete=models.CASCADE, related_name='waitlist_items')
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    ttl_respuesta_min = models.PositiveIntegerField(default=15) # ventana para aceptar cupo liberado
+
+    class Meta:
+        indexes = [
+        models.Index(fields=['doctor_horario', 'fecha_solicitud']),
+        ]
+        unique_together = (
+        ('paciente', 'doctor_horario'),
+        )
+
+    def __str__(self):
+        return f"Waitlist({self.paciente_id} -> DH:{self.doctor_horario_id}, {self.estado})"
+
+
+
+
+class CheckIn(models.Model):
+    ESTADOS = (
+    ('en_espera', 'En espera'),
+    ('atendiendo', 'Atendiendo'),
+    ('atendido', 'Atendido'),
+    ('no_show', 'No show'),
+    )
+
+    cita = models.OneToOneField(Cita, on_delete=models.CASCADE, related_name='checkin')
+    hora_llegada = models.DateTimeField(default=timezone.now)
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='en_espera')
+
+    class Meta:
+        indexes = [
+        models.Index(fields=['hora_llegada']),
+        ]
+
+    def __str__(self):
+        return f"CheckIn(Cita:{self.cita_id}, {self.estado})"

@@ -1,8 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head><title>Check-in</title></head>
-<body>
-<h2>Check-in realizado</h2>
-<p>Tu check-in para la cita #{{ cita.id }} se registró correctamente.</p>
-</body>
-</html>
+{% extends 'layouts/base.html' %}
+{% block title %} Check-In Exitoso {% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-success text-white text-center">
+          <h3 class="mb-0">✅ Check-In Exitoso</h3>
+        </div>
+        <div class="card-body text-center py-5">
+          <h4 class="text-success mb-3">Tu cita ha sido confirmada correctamente</h4>
+          <p class="mb-4">
+            Gracias, <strong>{{ cita.paciente.nombre }} {{ cita.paciente.apellidoPaterno }}</strong>.<br>
+            Tu cita con el Dr(a). <strong>{{ cita.doctor_horario.doctor.entidad.nombre }}</strong>
+            ha sido registrada y confirmada.
+          </p>
+
+          <!-- 🔹 Mensaje de vinculación EHR -->
+          {% if cita.ehr_id %}
+          <div class="alert alert-info text-start shadow-sm">
+            <h5 class="alert-heading">Vinculación con Historia Clínica (EHR)</h5>
+            <p class="mb-1">
+              Esta cita se encuentra asociada correctamente al registro único del paciente en el sistema EHR.
+            </p>
+            <p class="mb-0">
+             <strong>ID EHR Vinculado:</strong>
+             <span style="font-weight: bold; color: #000;">
+                {{ cita.ehr_id }}
+             </span>
+            </p>
+          </div>
+          {% else %}
+          <div class="alert alert-warning text-start shadow-sm">
+            <h5 class="alert-heading">⚠️ Información EHR no disponible</h5>
+            <p>Esta cita aún no ha sido vinculada con un registro del EHR.</p>
+          </div>
+          {% endif %}
+
+          <div class="mt-4">
+            <a href="{% url 'lista_citas_paciente' cita.paciente.id %}" class="btn btn-primary px-4">
+              Volver a mis citas
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
