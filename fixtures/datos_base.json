@@ -1,359 +1,359 @@
 [
-{
-  "model": "database.entidad",
-  "pk": 1,
-  "fields": {
-    "nombre": "Carlos",
-    "apellidoPaterno": "Mendoza",
-    "apellidoMaterno": "Huerta",
-    "correo": "carlos.mendoza@example.com",
-    "contraseña": "1234",
-    "telefono": "987451230",
-    "dni": "74814750"
+  {
+    "model": "database.entidad",
+    "pk": 1,
+    "fields": {
+      "nombre": "Carlos",
+      "apellidoPaterno": "Mendoza",
+      "apellidoMaterno": "Huerta",
+      "correo": "carlos.mendoza@example.com",
+      "contraseÃ±a": "1234",
+      "telefono": "987451230",
+      "dni": "74814750"
+    }
+  },
+  {
+    "model": "database.entidad",
+    "pk": 2,
+    "fields": {
+      "nombre": "Ana",
+      "apellidoPaterno": "Salazar",
+      "apellidoMaterno": "Quispe",
+      "correo": "ana.salazar@example.com",
+      "contraseÃ±a": "1234",
+      "telefono": "984512369",
+      "dni": "74814751"
+    }
+  },
+  {
+    "model": "database.entidad",
+    "pk": 3,
+    "fields": {
+      "nombre": "Luis",
+      "apellidoPaterno": "Paredes",
+      "apellidoMaterno": "Rojas",
+      "correo": "luis.paredes@example.com",
+      "contraseÃ±a": "1234",
+      "telefono": "981247563",
+      "dni": "74814752"
+    }
+  },
+  {
+    "model": "database.entidad",
+    "pk": 4,
+    "fields": {
+      "nombre": "MarÃ­a",
+      "apellidoPaterno": "Torres",
+      "apellidoMaterno": "Aguilar",
+      "correo": "maria.torres@example.com",
+      "contraseÃ±a": "1234",
+      "telefono": "986531247",
+      "dni": "74814753"
+    }
+  },
+  {
+    "model": "database.entidad",
+    "pk": 5,
+    "fields": {
+      "nombre": "Diego",
+      "apellidoPaterno": "Ramos",
+      "apellidoMaterno": "Castillo",
+      "correo": "diego.ramos@example.com",
+      "contraseÃ±a": "1234",
+      "telefono": "985412736",
+      "dni": "74814754"
+    }
+  },
+  {
+    "model": "database.entidad",
+    "pk": 6,
+    "fields": {
+      "nombre": "SofÃ­a",
+      "apellidoPaterno": "ChÃ¡vez",
+      "apellidoMaterno": "DueÃ±as",
+      "correo": "sofia.chavez@example.com",
+      "contraseÃ±a": "1234",
+      "telefono": "982145637",
+      "dni": "74814755"
+    }
+  },
+  {
+    "model": "database.entidad",
+    "pk": 7,
+    "fields": {
+      "nombre": "Carlos",
+      "apellidoPaterno": "Chicana",
+      "apellidoMaterno": "Chavez",
+      "correo": "carloschi@gmail.com",
+      "contraseÃ±a": "1234",
+      "telefono": "900900900",
+      "dni": "74814748"
+    }
+  },
+  {
+    "model": "database.rol",
+    "pk": 1,
+    "fields": {
+      "codigo_rol": "001",
+      "nombre_rol": "Doctor"
+    }
+  },
+  {
+    "model": "database.rol",
+    "pk": 2,
+    "fields": {
+      "codigo_rol": "002",
+      "nombre_rol": "Paciente"
+    }
+  },
+  {
+    "model": "database.rol",
+    "pk": 3,
+    "fields": {
+      "codigo_rol": "003",
+      "nombre_rol": "Administrador"
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 1,
+    "fields": {
+      "entidad": 1,
+      "rol": 1
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 2,
+    "fields": {
+      "entidad": 2,
+      "rol": 2
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 3,
+    "fields": {
+      "entidad": 3,
+      "rol": 2
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 4,
+    "fields": {
+      "entidad": 4,
+      "rol": 2
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 5,
+    "fields": {
+      "entidad": 5,
+      "rol": 2
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 6,
+    "fields": {
+      "entidad": 6,
+      "rol": 2
+    }
+  },
+  {
+    "model": "database.rolentidad",
+    "pk": 7,
+    "fields": {
+      "entidad": 7,
+      "rol": 3
+    }
+  },
+  {
+    "model": "database.especialidad",
+    "pk": 1,
+    "fields": {
+      "nombre": "Cardiologia"
+    }
+  },
+  {
+    "model": "database.doctordetalle",
+    "pk": 1,
+    "fields": {
+      "entidad": 1,
+      "especialidad": 1,
+      "nro_colegiatura": "87848465"
+    }
+  },
+  {
+    "model": "database.horario",
+    "pk": 5,
+    "fields": {
+      "fecha": "2025-11-21",
+      "hora_inicio": "06:00:00",
+      "hora_fin": "06:30:00"
+    }
+  },
+  {
+    "model": "database.horario",
+    "pk": 7,
+    "fields": {
+      "fecha": "2025-11-21",
+      "hora_inicio": "07:00:00",
+      "hora_fin": "07:30:00"
+    }
+  },
+  {
+    "model": "database.doctorhorario",
+    "pk": 5,
+    "fields": {
+      "doctor": 1,
+      "horario": 5
+    }
+  },
+  {
+    "model": "database.doctorhorario",
+    "pk": 7,
+    "fields": {
+      "doctor": 1,
+      "horario": 7
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 1,
+    "fields": {
+      "fecha": "2025-01-01",
+      "nombre": "AÃ±o Nuevo"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 2,
+    "fields": {
+      "fecha": "2025-04-17",
+      "nombre": "Jueves Santo"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 3,
+    "fields": {
+      "fecha": "2025-04-18",
+      "nombre": "Viernes Santo"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 4,
+    "fields": {
+      "fecha": "2025-04-20",
+      "nombre": "Domingo de ResurrecciÃ³n"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 5,
+    "fields": {
+      "fecha": "2025-05-01",
+      "nombre": "DÃ­a del Trabajo"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 6,
+    "fields": {
+      "fecha": "2025-06-07",
+      "nombre": "Batalla de Arica y DÃ­a de la Bandera"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 7,
+    "fields": {
+      "fecha": "2025-06-29",
+      "nombre": "San Pedro y San Pablo"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 8,
+    "fields": {
+      "fecha": "2025-07-23",
+      "nombre": "DÃ­a de la Fuerza AÃ©rea del PerÃº"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 9,
+    "fields": {
+      "fecha": "2025-07-28",
+      "nombre": "DÃ­a de la Independencia"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 10,
+    "fields": {
+      "fecha": "2025-07-29",
+      "nombre": "DÃ­a de la Gran Parada Militar"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 11,
+    "fields": {
+      "fecha": "2025-08-06",
+      "nombre": "Batalla de JunÃ­n"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 12,
+    "fields": {
+      "fecha": "2025-08-30",
+      "nombre": "Santa Rosa de Lima"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 13,
+    "fields": {
+      "fecha": "2025-10-08",
+      "nombre": "Combate de Angamos"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 14,
+    "fields": {
+      "fecha": "2025-11-01",
+      "nombre": "Todos Los Santos"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 15,
+    "fields": {
+      "fecha": "2025-12-08",
+      "nombre": "Inmaculada ConcepciÃ³n"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 16,
+    "fields": {
+      "fecha": "2025-12-09",
+      "nombre": "Batalla de Ayacucho"
+    }
+  },
+  {
+    "model": "database.holiday",
+    "pk": 17,
+    "fields": {
+      "fecha": "2025-12-25",
+      "nombre": "Navidad del SeÃ±or"
+    }
   }
-},
-{
-  "model": "database.entidad",
-  "pk": 2,
-  "fields": {
-    "nombre": "Ana",
-    "apellidoPaterno": "Salazar",
-    "apellidoMaterno": "Quispe",
-    "correo": "ana.salazar@example.com",
-    "contraseña": "1234",
-    "telefono": "984512369",
-    "dni": "74814751"
-  }
-},
-{
-  "model": "database.entidad",
-  "pk": 3,
-  "fields": {
-    "nombre": "Luis",
-    "apellidoPaterno": "Paredes",
-    "apellidoMaterno": "Rojas",
-    "correo": "luis.paredes@example.com",
-    "contraseña": "1234",
-    "telefono": "981247563",
-    "dni": "74814752"
-  }
-},
-{
-  "model": "database.entidad",
-  "pk": 4,
-  "fields": {
-    "nombre": "María",
-    "apellidoPaterno": "Torres",
-    "apellidoMaterno": "Aguilar",
-    "correo": "maria.torres@example.com",
-    "contraseña": "1234",
-    "telefono": "986531247",
-    "dni": "74814753"
-  }
-},
-{
-  "model": "database.entidad",
-  "pk": 5,
-  "fields": {
-    "nombre": "Diego",
-    "apellidoPaterno": "Ramos",
-    "apellidoMaterno": "Castillo",
-    "correo": "diego.ramos@example.com",
-    "contraseña": "1234",
-    "telefono": "985412736",
-    "dni": "74814754"
-  }
-},
-{
-  "model": "database.entidad",
-  "pk": 6,
-  "fields": {
-    "nombre": "Sofía",
-    "apellidoPaterno": "Chávez",
-    "apellidoMaterno": "Dueñas",
-    "correo": "sofia.chavez@example.com",
-    "contraseña": "1234",
-    "telefono": "982145637",
-    "dni": "74814755"
-  }
-},
-{
-  "model": "database.entidad",
-  "pk": 7,
-  "fields": {
-    "nombre": "Carlos",
-    "apellidoPaterno": "Chicana",
-    "apellidoMaterno": "Chavez",
-    "correo": "carloschi@gmail.com",
-    "contraseña": "1234",
-    "telefono": "900900900",
-    "dni": "74814748"
-  }
-},
-{
-  "model": "database.rol",
-  "pk": 1,
-  "fields": {
-    "codigo_rol": "001",
-    "nombre_rol": "Doctor"
-  }
-},
-{
-  "model": "database.rol",
-  "pk": 2,
-  "fields": {
-    "codigo_rol": "002",
-    "nombre_rol": "Paciente"
-  }
-},
-{
-  "model": "database.rol",
-  "pk": 3,
-  "fields": {
-    "codigo_rol": "003",
-    "nombre_rol": "Administrador"
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 1,
-  "fields": {
-    "entidad": 1,
-    "rol": 1
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 2,
-  "fields": {
-    "entidad": 2,
-    "rol": 2
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 3,
-  "fields": {
-    "entidad": 3,
-    "rol": 2
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 4,
-  "fields": {
-    "entidad": 4,
-    "rol": 2
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 5,
-  "fields": {
-    "entidad": 5,
-    "rol": 2
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 6,
-  "fields": {
-    "entidad": 6,
-    "rol": 2
-  }
-},
-{
-  "model": "database.rolentidad",
-  "pk": 7,
-  "fields": {
-    "entidad": 7,
-    "rol": 3
-  }
-},
-{
-  "model": "database.especialidad",
-  "pk": 1,
-  "fields": {
-    "nombre": "Cardiologia"
-  }
-},
-{
-  "model": "database.doctordetalle",
-  "pk": 1,
-  "fields": {
-    "entidad": 1,
-    "especialidad": 1,
-    "nro_colegiatura": "87848465"
-  }
-},
-{
-  "model": "database.horario",
-  "pk": 5,
-  "fields": {
-    "fecha": "2025-11-21",
-    "hora_inicio": "06:00:00",
-    "hora_fin": "06:30:00"
-  }
-},
-{
-  "model": "database.horario",
-  "pk": 7,
-  "fields": {
-    "fecha": "2025-11-21",
-    "hora_inicio": "07:00:00",
-    "hora_fin": "07:30:00"
-  }
-},
-{
-  "model": "database.doctorhorario",
-  "pk": 5,
-  "fields": {
-    "doctor": 1,
-    "horario": 5
-  }
-},
-{
-  "model": "database.doctorhorario",
-  "pk": 7,
-  "fields": {
-    "doctor": 1,
-    "horario": 7
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 1,
-  "fields": {
-    "fecha": "2025-01-01",
-    "nombre": "Año Nuevo"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 2,
-  "fields": {
-    "fecha": "2025-04-17",
-    "nombre": "Jueves Santo"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 3,
-  "fields": {
-    "fecha": "2025-04-18",
-    "nombre": "Viernes Santo"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 4,
-  "fields": {
-    "fecha": "2025-04-20",
-    "nombre": "Domingo de Resurrección"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 5,
-  "fields": {
-    "fecha": "2025-05-01",
-    "nombre": "Día del Trabajo"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 6,
-  "fields": {
-    "fecha": "2025-06-07",
-    "nombre": "Batalla de Arica y Día de la Bandera"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 7,
-  "fields": {
-    "fecha": "2025-06-29",
-    "nombre": "San Pedro y San Pablo"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 8,
-  "fields": {
-    "fecha": "2025-07-23",
-    "nombre": "Día de la Fuerza Aérea del Perú"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 9,
-  "fields": {
-    "fecha": "2025-07-28",
-    "nombre": "Día de la Independencia"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 10,
-  "fields": {
-    "fecha": "2025-07-29",
-    "nombre": "Día de la Gran Parada Militar"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 11,
-  "fields": {
-    "fecha": "2025-08-06",
-    "nombre": "Batalla de Junín"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 12,
-  "fields": {
-    "fecha": "2025-08-30",
-    "nombre": "Santa Rosa de Lima"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 13,
-  "fields": {
-    "fecha": "2025-10-08",
-    "nombre": "Combate de Angamos"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 14,
-  "fields": {
-    "fecha": "2025-11-01",
-    "nombre": "Todos Los Santos"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 15,
-  "fields": {
-    "fecha": "2025-12-08",
-    "nombre": "Inmaculada Concepción"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 16,
-  "fields": {
-    "fecha": "2025-12-09",
-    "nombre": "Batalla de Ayacucho"
-  }
-},
-{
-  "model": "database.holiday",
-  "pk": 17,
-  "fields": {
-    "fecha": "2025-12-25",
-    "nombre": "Navidad del Señor"
-  }
-}
 ]
