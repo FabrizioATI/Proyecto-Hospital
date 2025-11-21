@@ -28,81 +28,6 @@ def lista_citas_paciente(request, paciente_id):
 
     return render(request, "citas/lista_citas.html", {"citas": citas})
 
-def registrar_cita_paciente(request, paciente_id):
-    paciente = get_object_or_404(Entidad, id=paciente_id)
-    errors = {}
-
-    especialidades = Especialidad.objects.all()
-
-    especialidad_id = request.GET.get("especialidad")
-    selected_doc = request.GET.get("doctor")
-
-    doctores = (
-        DoctorDetalle.objects.filter(especialidad_id=especialidad_id)
-        if especialidad_id else []
-    )
-
-    if request.method == "POST":
-        doctor_id = request.POST.get("doctor_id")
-        clasificacion = request.POST.get("clasificacion")
-        motivo = request.POST.get("motivo")
-
-        doctor = get_object_or_404(Entidad, id=doctor_id)
-
-        horarios = (
-            DoctorHorario.objects
-            .filter(doctor__entidad_id=doctor_id)
-            .select_related("horario")
-            .order_by("horario__fecha", "horario__hora_inicio")
-        )
-
-        # buscar primer horario libre
-        horario_asignado = None
-        for h in horarios:
-            if not Cita.objects.filter(
-                doctor_horario=h,
-                estado__in=["pendiente", "confirmada"]
-            ).exists():
-                horario_asignado = h
-                break
-
-        if not horario_asignado:
-
-            # si el doctor NO tiene horarios creados
-            if not horarios.exists():
-                messages.error(request, "El doctor no tiene horarios configurados.")
-                return redirect("registrar_cita_paciente", paciente_id)
-
-            # Enviar a la cola WAITLIST según prioridad
-            WaitlistItem.objects.get_or_create(
-                paciente=paciente,
-                doctor_horario=horarios.first()
-            )
-
-            messages.info(request, "Has sido añadido a la lista de espera.")
-            return redirect("lista_citas_paciente", paciente_id)
-
-        # Crear cita normal
-        cita = Cita.objects.create(
-            paciente=paciente,
-            doctor=doctor,
-            doctor_horario=horario_asignado,
-            motivo=motivo,
-            clasificacion=clasificacion
-        )
-
-        messages.success(request, "Cita registrada correctamente.")
-        return redirect("lista_citas_paciente", paciente_id)
-
-    return render(request, "citas/registrar_cita.html", {
-        "especialidades": especialidades,
-        "paciente": paciente,
-        "doctores": doctores,
-        "errors": errors,
-        "selected_esp": int(especialidad_id) if especialidad_id else None,
-        "selected_doc": int(selected_doc) if selected_doc else None,
-    })
-
 def editar_cita_paciente(request, paciente_id, pk):
     cita = get_object_or_404(Cita, pk=pk, paciente_id=paciente_id)
     errors = {}
@@ -112,10 +37,16 @@ def editar_cita_paciente(request, paciente_id, pk):
 
     if request.method == "POST":
         motivo = request.POST.get("motivo")
+        tipo_cita = request.POST.get("tipo_cita")  # <-- viene del select
+
         if not motivo:
             errors["motivo"] = "Debe ingresar un motivo."
-        else:
+        if tipo_cita not in ["PRESENCIAL", "VIRTUAL"]:
+            errors["tipo_cita"] = "Debe seleccionar una modalidad válida."
+
+        if not errors:
             cita.motivo = motivo
+            cita.tipo_cita = tipo_cita  # <-- AQUÍ se guarda
             cita.save()
             return redirect("lista_citas_paciente", paciente_id=paciente_id)
 
@@ -128,6 +59,7 @@ def editar_cita_paciente(request, paciente_id, pk):
         "selected_doc": cita.doctor_horario.doctor.id,
         "errors": errors,
     })
+
 
 def eliminar_cita_paciente(request, paciente_id, pk):
     cita = get_object_or_404(Cita, pk=pk, paciente_id=paciente_id)
@@ -168,7 +100,6 @@ def checkin_view(request, cita_id):
 
     # Mostrar resultado
     return render(request, 'citas/checkin_exitoso.html', {'cita': cita})
-
 
 def cancelar_cita_view(request, cita_id):
     cita = get_object_or_404(Cita, pk=cita_id)

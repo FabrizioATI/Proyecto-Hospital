@@ -18,9 +18,9 @@
               <label>Especialidad</label>
               <select name="especialidad" class="form-control" disabled>
                 {% for esp in especialidades %}
-                  <option value="{{ esp.id }}" {% if esp.id == selected_esp %}selected{% endif %}>
-                    {{ esp.nombre }}
-                  </option>
+                <option value="{{ esp.id }}" {% if esp.id == selected_esp %}selected{% endif %}>
+                  {{ esp.nombre }}
+                </option>
                 {% endfor %}
               </select>
             </div>
@@ -30,9 +30,9 @@
               <label>Doctor</label>
               <select name="doctor" class="form-control" disabled>
                 {% for doc in doctores %}
-                  <option value="{{ doc.id }}" {% if doc.id == selected_doc %}selected{% endif %}>
-                    {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }}
-                  </option>
+                <option value="{{ doc.id }}" {% if doc.id == selected_doc %}selected{% endif %}>
+                  {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }}
+                </option>
                 {% endfor %}
               </select>
             </div>
@@ -47,22 +47,23 @@
               <label>Horario</label>
               <select name="doctor_horario" class="form-control" disabled>
                 {% for h in horarios %}
-                  <option value="{{ h.id }}" {% if h.id == cita.doctor_horario.id %}selected{% endif %}>
-                    {{ h.horario.fecha|date:"Y/m/d" }} {{ h.horario.hora_inicio|time:"h:i A" }} - {{ h.horario.hora_fin|time:"h:i A" }}
-                  </option>
+                <option value="{{ h.id }}" {% if h.id == cita.doctor_horario.id %}selected{% endif %}>
+                  {{ h.horario.fecha|date:"Y/m/d" }} {{ h.horario.hora_inicio|time:"h:i A" }} - {{ h.horario.hora_fin|time:"h:i A" }}
+                </option>
                 {% endfor %}
               </select>
             </div>
 
             <!-- Modalidad -->
+            <!-- Modalidad -->
             <div class="form-group mb-3">
               <label>Modalidad</label>
-              <select name="tipo" class="form-control">
-                <option value="presencial" {% if cita.tipo == "presencial" %}selected{% endif %}>Presencial</option>
-                <option value="virtual" {% if cita.tipo == "virtual" %}selected{% endif %}>Virtual</option>
+              <select name="tipo_cita" class="form-control">
+                <option value="PRESENCIAL" {% if cita.tipo_cita == "PRESENCIAL" %}selected{% endif %}>Presencial</option>
+                <option value="VIRTUAL" {% if cita.tipo_cita == "VIRTUAL" %}selected{% endif %}>Virtual</option>
               </select>
-              {% if errors.tipo %}
-                <small class="text-danger">{{ errors.tipo }}</small>
+              {% if errors.tipo_cita %}
+              <small class="text-danger">{{ errors.tipo_cita }}</small>
               {% endif %}
             </div>
 
@@ -71,7 +72,7 @@
               <label>Motivo</label>
               <textarea name="motivo" class="form-control">{{ cita.motivo }}</textarea>
               {% if errors.motivo %}
-                <small class="text-danger">{{ errors.motivo }}</small>
+              <small class="text-danger">{{ errors.motivo }}</small>
               {% endif %}
             </div>
 

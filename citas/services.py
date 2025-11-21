@@ -39,7 +39,7 @@ def _get_prioridad_num(clasificacion):
 
 
 @transaction.atomic
-def solicitar_cita(paciente, doctor_detalle, clasificacion, motivo):
+def solicitar_cita(paciente, doctor_detalle, clasificacion, motivo, tipo_cita):
     """
     1. Registra la solicitud en la waitlist (sin horario).
     2. Lanza el motor de colas para ese doctor.
@@ -48,6 +48,7 @@ def solicitar_cita(paciente, doctor_detalle, clasificacion, motivo):
         paciente=paciente,
         doctor_horario=None,
         motivo=motivo,
+        tipo_cita=tipo_cita,
         clasificacion=clasificacion,
     )
 

@@ -20,7 +20,7 @@
               <select name="especialidad" class="form-control" onchange="this.form.submit()">
                 <option value="">-- Seleccione especialidad --</option>
                 {% for esp in especialidades %}
-                <option value="{{ esp.id }}" {% if esp.id==selected_esp %} selected{% endif %}>
+                <option value="{{ esp.id }}" {% if esp.id == selected_esp %} selected{% endif %}>
                   {{ esp.nombre }}
                 </option>
                 {% endfor %}
@@ -34,7 +34,7 @@
                 onchange="this.form.submit()">
                 <option value="">-- Seleccione doctor --</option>
                 {% for doc in doctores %}
-                <option value="{{ doc.id }}" {% if doc.id==selected_doc %} selected{% endif %}>
+                <option value="{{ doc.id }}" {% if doc.id == selected_doc %} selected{% endif %}>
                   Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
                   ({{ doc.especialidad.nombre }})
                 </option>
