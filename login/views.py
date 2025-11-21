@@ -25,21 +25,24 @@ def login_view(request):
 
                 if rol_entidad:
                     request.session["codigo_rol"] = rol_entidad.rol.codigo_rol
-
+                    
                     if rol_entidad.rol.codigo_rol == "001":  # Doctor
+                        messages.success(request, f"¡Bienvenido, {request.session['entidad_nombre']}!")
                         return redirect("index")
                     elif rol_entidad.rol.codigo_rol == "002":  # Paciente
+                        messages.success(request, f"¡Bienvenido, {request.session['entidad_nombre']}!")
                         return redirect("index")
                     elif rol_entidad.rol.codigo_rol == "003":  # Administrador
+                        messages.success(request, f"¡Bienvenido, {request.session['entidad_nombre']}!")
                         return redirect("index")
                     else:
-                        ctx["login_error"] = "Rol no reconocido"
+                        messages.success(request, f"Rol no reconocido!")
                 else:
-                    ctx["login_error"] = "No tienes un rol asignado"
+                    messages.warning(request, "No tienes un rol asignado.")
             else:
-                ctx["login_error"] = "Contraseña incorrecta"
+                messages.error(request, "Contraseña no es corrects mira aqui.")
         except Entidad.DoesNotExist:
-            ctx["login_error"] = "Usuario no encontrado"
+            messages.error(request, "Usuario no encontrado.")
 
     return render(request, "accounts/login.html", ctx)
 
@@ -48,9 +51,12 @@ def home(request):
         entidad = Entidad.objects.get(id=request.session["entidad_id"])
         return render(request, "doctor/lista_medicos.html", {"entidad": entidad})
     else:
+        messages.warning(request, "Debes iniciar sesión para continuar.")
         return redirect("login")
 
 def logout_view(request):
+    request.session.flush() 
+    messages.info(request, "Sesión cerrada correctamente.")
     return redirect('login')
 
 def register(request):
@@ -67,9 +73,11 @@ def register(request):
         # Validaciones
         if Entidad.objects.filter(dni=dni).exists():
             errors["dni"] = "Este DNI ya está registrado."
+            messages.error(request, errors["dni"])
 
         if Entidad.objects.filter(correo=correo).exists():
             errors["correo"] = "Este correo ya está registrado."
+            messages.error(request, errors["correo"])
 
         if not errors:
             entidad = Entidad.objects.create(
@@ -84,7 +92,8 @@ def register(request):
 
             rol_paciente, created = Rol.objects.get_or_create(codigo_rol="002", nombre_rol="Paciente")
             RolEntidad.objects.create(entidad=entidad, rol=rol_paciente)
-
+            messages.success(request, "Cuenta creada con éxito. Inicia sesión.")
+             
             return redirect("login")
 
     return render(

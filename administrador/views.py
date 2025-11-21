@@ -1,11 +1,5 @@
-from django.contrib.auth import authenticate, login
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad, DoctorHorario, Horario
-from django.contrib.auth import logout as django_logout 
-from .models import Entidad, DoctorDetalle, Especialidad, Rol, RolEntidad
-from .models import Cita, DoctorHorario,Holiday
+from django.shortcuts import render, redirect
+from database.models import Especialidad, Rol
 
 #Index
 def index(request):

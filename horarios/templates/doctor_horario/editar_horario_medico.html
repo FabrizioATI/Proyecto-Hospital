@@ -3,6 +3,11 @@
 {% block title %} Editar Horario de Doctor {% endblock title %}
 
 {% block content %}
+{% if errors.form %}<div class="alert alert-danger">{{ errors.form }}</div>{% endif %}
+{% if errors.rango %}<div class="alert alert-warning">{{ errors.rango }}</div>{% endif %}
+{% if errors.paso %}<div class="alert alert-warning">{{ errors.paso }}</div>{% endif %}
+{% if errors.conflictos %}<div class="alert alert-warning">{{ errors.conflictos }}</div>{% endif %}
+{% if info.parcial %}<div class="alert alert-info">{{ info.parcial }}</div>{% endif %}
 
 <div class="container-fluid mt-4">
   <div class="row">
@@ -47,24 +52,31 @@
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Fecha</label>
-                    <input type="date" name="fecha" class="form-control" required
-                           value="{{ doctor_horario.horario.fecha|date:'Y-m-d' }}">
+                    <input type="date" name="fecha" class="form-control" required value="{{ doctor_horario.horario.fecha|date:'Y-m-d' }}"
+                          min="{{ hoy|date:'Y-m-d' }}">
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Hora Inicio</label>
-                    <input type="time" name="hora_inicio" class="form-control" required
-                           value="{{ doctor_horario.horario.hora_inicio|time:'H:i' }}">
+                    <select name="hora_inicio" id="hora_inicio" class="form-control" required>
+                      {% for t in time_slots %}
+                      <option value="{{ t }}">{{ t }}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Hora Fin</label>
-                    <input type="time" name="hora_fin" class="form-control" required
-                           value="{{ doctor_horario.horario.hora_fin|time:'H:i' }}">
+                    <select name="hora_fin" id="hora_fin" class="form-control" required>
+                      {% for t in time_slots %}
+                      <option value="{{ t }}">{{ t }}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
+                
               </div>
             </div>
 

@@ -1,0 +1,45 @@
+{% load static %}
+
+<div class="toast-container position-fixed top-0 start-0 right p-3" style="z-index: 2000;">
+  {% if messages %}
+    {% for m in messages %}
+      {% with level=m.tags|default:'primary'%}
+      <!-- <div class="toast bg-{{ level }} text-white border-0 mb-2"
+           role="status"
+           aria-live="polite"
+           aria-atomic="true"
+           data-delay="3500"
+           data-autohide="true">
+
+        <div class="d-flex align-items-center">
+          <div class="toast-body">
+            {{ m }}
+          </div>
+
+          <button type="button"
+                  class="btn-close btn-close-white me-2 m-2"
+                  data-bs-dismiss="toast"
+                  data-dismiss="toast"
+                  aria-label="Close"></button>
+        </div>
+
+      </div> -->
+      {% endwith %}
+    {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+  (function () {
+    if (window.bootstrap && window.bootstrap.Toast) {
+      document.querySelectorAll('.toast').forEach(function (el) {
+        new bootstrap.Toast(el, { delay: 3500, autohide: true }).show();
+      });
+      return;
+    }
+
+    if (window.jQuery && typeof jQuery.fn.toast === 'function') {
+      jQuery('.toast').toast({ delay: 3500 }).toast('show');
+    }
+  })();
+</script>

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from django.db import transaction
+from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from database.models import DoctorDetalle, Horario, DoctorHorario, Holiday
@@ -49,7 +50,6 @@ def registrar_horario_medico(request):
     errors, info = {}, {}
 
     if request.method == "POST":
-        # 2) IGNORAR el doctor enviado por el form: usar SIEMPRE el doctor en sesión
         doctor_id = doctor_sesion.id
 
         fecha_str = request.POST.get("fecha")
@@ -66,6 +66,13 @@ def registrar_horario_medico(request):
             except ValueError:
                 errors["form"] = "Formato de fecha/hora inválido."
 
+        # 🔒 No permitir fechas pasadas
+        if not errors:
+            hoy = timezone.localdate()
+            if fecha < hoy:
+                errors["fecha"] = "No puedes registrar horarios en una fecha pasada."
+
+        # Validaciones de rango y paso
         if not errors:
             if hi >= hf:
                 errors["rango"] = "La hora fin debe ser mayor que la hora inicio."
@@ -84,6 +91,7 @@ def registrar_horario_medico(request):
                         slot_end_dt = start_dt + timedelta(minutes=30)
                         slot_end = slot_end_dt.time()
 
+                        # ❗ Evita solapamientos / duplicados del mismo doctor
                         existe = DoctorHorario.objects.filter(
                             doctor_id=doctor_id,
                             horario__fecha=fecha,
@@ -94,7 +102,11 @@ def registrar_horario_medico(request):
                         if existe:
                             conflictos.append(f"{slot_start.strftime('%H:%M')}–{slot_end.strftime('%H:%M')}")
                         else:
-                            h = Horario.objects.create(fecha=fecha, hora_inicio=slot_start, hora_fin=slot_end)
+                            h = Horario.objects.create(
+                                fecha=fecha,
+                                hora_inicio=slot_start,
+                                hora_fin=slot_end
+                            )
                             DoctorHorario.objects.create(doctor_id=doctor_id, horario=h)
                             creados += 1
 
@@ -105,6 +117,7 @@ def registrar_horario_medico(request):
             if conflictos and not creados:
                 errors["conflictos"] = "Ya existen turnos que chocan: " + ", ".join(conflictos)
             else:
+                # Reprocesa cola por si se liberan/crean slots
                 procesar_cola_doctor(doctor_sesion)
 
                 if conflictos and creados:
@@ -115,47 +128,122 @@ def registrar_horario_medico(request):
 
                 return redirect("lista_horarios_medico")
 
-    # 3) en el contexto enviamos SOLO el doctor de sesión
     return render(request, "doctor_horario/registrar_horario_medicos.html", {
         "doctor_sesion": doctor_sesion,
         "errors": errors,
         "info": info,
-        "time_slots": time_slots
+        "time_slots": time_slots,
+        "hoy": timezone.localdate(),  # para el min del input date
     })
+
+from datetime import datetime
+from django.utils import timezone
+from django.shortcuts import render, redirect, get_object_or_404
+from database.models import DoctorDetalle, DoctorHorario
+from citas.services import procesar_cola_doctor
 
 def editar_horario_medico(request, pk):
-    # Obtenemos el registro de DoctorHorario
     doctor_horario = get_object_or_404(DoctorHorario, pk=pk)
-    
+    doctores = DoctorDetalle.objects.all()
+    time_slots = build_time_slots("06:00", "22:00", 30)
+
+    errors = {}
+
+    # valores por defecto (lo de BD) para prellenar
+    fecha_value = doctor_horario.horario.fecha.strftime("%Y-%m-%d")
+    hi_value = doctor_horario.horario.hora_inicio.strftime("%H:%M")
+    hf_value = doctor_horario.horario.hora_fin.strftime("%H:%M")
+
     if request.method == "POST":
         doctor_id = request.POST.get("doctor")
-        fecha = request.POST.get("fecha")
-        hora_inicio = request.POST.get("hora_inicio")
-        hora_fin = request.POST.get("hora_fin")
+        fecha_str = request.POST.get("fecha")
+        hi_str = request.POST.get("hora_inicio")
+        hf_str = request.POST.get("hora_fin")
 
-        # Actualizamos la relación Doctor
-        doctor = get_object_or_404(DoctorDetalle, pk=doctor_id)
-        doctor_horario.doctor = doctor
+        # preserva valores posteados por si hay errores
+        fecha_value = fecha_str or fecha_value
+        hi_value = hi_str or hi_value
+        hf_value = hf_str or hf_value
 
-        # Actualizamos la información de Horario
-        horario = doctor_horario.horario
-        horario.fecha = fecha
-        horario.hora_inicio = hora_inicio
-        horario.hora_fin = hora_fin
-        horario.save()
+        # --- Parseos y validaciones ---
+        try:
+            fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+            hi = datetime.strptime(hi_str, "%H:%M").time()
+            hf = datetime.strptime(hf_str, "%H:%M").time()
+        except (TypeError, ValueError):
+            errors["form"] = "Formato de fecha/hora inválido."
+        else:
+            # no permitir fecha pasada
+            hoy = timezone.localdate()
+            if fecha < hoy:
+                errors["fecha"] = "No puedes registrar horarios en una fecha pasada."
 
-        # Guardamos la relación DoctorHorario
-        doctor_horario.save()
+            # rango y paso
+            if hi >= hf:
+                errors["rango"] = "La hora fin debe ser mayor que la hora inicio."
+            if hi.minute not in (0, 30) or hf.minute not in (0, 30):
+                errors["paso"] = "Usa intervalos de 30 minutos (:00 o :30)."
 
-        # messages.success(request, "Horario actualizado correctamente.")
-        return redirect('lista_horarios_medico')
+        if not errors:
+            # solape con otros del mismo doctor (excluye el actual)
+            solapa = (DoctorHorario.objects
+                      .filter(
+                          doctor_id=doctor_id,
+                          horario__fecha=fecha,
+                          horario__hora_inicio__lt=hf,
+                          horario__hora_fin__gt=hi,
+                      )
+                      .exclude(pk=doctor_horario.pk)
+                      .exists())
+            if solapa:
+                errors["conflictos"] = "Ya existe un turno que se solapa con el rango elegido."
 
-    # GET: mostramos el formulario con los datos actuales
-    doctores = DoctorDetalle.objects.all()
+        # --- Guardar o re-render con errores ---
+        if not errors:
+            doctor = get_object_or_404(DoctorDetalle, pk=doctor_id)
+            doctor_horario.doctor = doctor
+            h = doctor_horario.horario
+            h.fecha = fecha
+            h.hora_inicio = hi
+            h.hora_fin = hf
+            h.save()
+            doctor_horario.save()
+
+            # reprocesa cola para ese doctor (no uses doctor_sesion aquí)
+            procesar_cola_doctor(doctor)
+
+            return redirect('lista_horarios_medico')
+
+    # GET inicial o POST con errores => re-render
     return render(request, "doctor_horario/editar_horario_medico.html", {
         "doctor_horario": doctor_horario,
-        "doctores": doctores
+        "doctores": doctores,
+        "time_slots": time_slots,
+        "errors": errors,
+        "hoy": timezone.localdate(),
+        "fecha_value": doctor_horario.horario.fecha.strftime("%Y-%m-%d"),
+        "hi_value": doctor_horario.horario.hora_inicio.strftime("%H:%M"),
+        "hf_value": doctor_horario.horario.hora_fin.strftime("%H:%M"),
     })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def eliminar_horario_medico(request, pk):
     doctor_horario = get_object_or_404(DoctorHorario, pk=pk)

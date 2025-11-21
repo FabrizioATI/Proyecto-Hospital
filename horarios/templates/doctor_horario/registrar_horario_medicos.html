@@ -49,7 +49,7 @@
                 <div class="col-lg-4">
                   <div class="form-group">
                     <label class="form-control-label">Fecha</label>
-                    <input type="date" name="fecha" class="form-control" required>
+                    <input type="date" name="fecha" class="form-control" required min="{{ hoy|date:'Y-m-d' }}">
                   </div>
                 </div>
                 <div class="col-lg-4">
@@ -72,6 +72,7 @@
                     </select>
                   </div>
                 </div>
+                
               </div>
             </div>
 
