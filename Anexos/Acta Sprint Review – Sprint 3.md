@@ -7,15 +7,15 @@
 **Requerimientos trabajados:**
 - **RF6:** Priorización y triage en la cola  
 - **RF9:** Protección anti-abuso (limitación de agendamientos)
-**Requerimientos no finalizados:**
 - **RF7:** Integración con historia clínica (EHR) 
+**Requerimientos no finalizados:**
 - **RF8:** Reglas de negocio de cupos (capacidad) 
 ---
 
 ## ✅ Resultados del Sprint
 - Se implementaron parcialmente las reglas de **priorización y triage en la cola**, con ordenamiento dinámico según tipo de atención.
 - La **protección anti-abuso** se completó a nivel lógico, restringiendo múltiples agendamientos por paciente en la misma especialidad.  
-- La **integración con la historia clínica (EHR)** no fue trabajado.
+- La **integración con la historia clínica (EHR)** se completo de forma exitosa.
 - El módulo de **reglas de cupos** no fue trabajado.
 
 ---
