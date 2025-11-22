@@ -1,4 +1,5 @@
 {% extends 'layouts/base.html' %}
+
 {% block title %} Check-In Exitoso {% endblock title %}
 
 {% block content %}
@@ -14,7 +15,7 @@
           <p class="mb-4">
             Gracias, <strong>{{ cita.paciente.nombre }} {{ cita.paciente.apellidoPaterno }}</strong>.<br>
             Tu cita con el Dr(a). <strong>{{ cita.doctor_horario.doctor.entidad.nombre }}</strong>
-            ha sido registrada y confirmada.
+            ha sido registrada y confirmada para el <strong>{{ cita.doctor_horario.horario.fecha|date:"d/m/Y" }}</strong> a las <strong>{{ cita.doctor_horario.horario.hora_inicio|time:"H:i" }}</strong>.
           </p>
 
           <!-- 🔹 Mensaje de vinculación EHR -->
@@ -34,7 +35,7 @@
           {% else %}
           <div class="alert alert-warning text-start shadow-sm">
             <h5 class="alert-heading">⚠️ Información EHR no disponible</h5>
-            <p>Esta cita aún no ha sido vinculada con un registro del EHR.</p>
+            <p>Esta cita aún no ha sido vinculada con un registro del EHR. Si esto persiste, por favor contacta a soporte.</p>
           </div>
           {% endif %}
 

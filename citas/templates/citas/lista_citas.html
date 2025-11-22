@@ -60,7 +60,7 @@
                   {% if tipo_usuario != 'doctor' %}
                   <td class="text-end">
                     <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
-                    {% if c.estado == 'pendiente' %}
+                    {% if c.estado == 'EN_ESPERA' %}
                       <a href="{% url 'checkin' c.id %}"
                         class="btn btn-sm btn-primary">
                         Hacer check-in

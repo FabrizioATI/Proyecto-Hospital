@@ -1,4 +1,5 @@
 {% extends 'layouts/base.html' %}
+
 {% block title %} Registrar Cita {% endblock title %}
 
 {% block content %}
@@ -30,8 +31,7 @@
             <!-- Doctor -->
             <div class="form-group mb-3">
               <label>Doctor</label>
-              <select name="doctor" class="form-control" {% if not doctores %}disabled{% endif %}
-                onchange="this.form.submit()">
+              <select name="doctor" class="form-control" {% if not doctores %}disabled{% endif %} onchange="this.form.submit()">
                 <option value="">-- Seleccione doctor --</option>
                 {% for doc in doctores %}
                 <option value="{{ doc.id }}" {% if doc.id == selected_doc %} selected{% endif %}>
@@ -68,6 +68,15 @@
             {% if selected_doc %}
             <input type="hidden" name="doctor_id" value="{{ selected_doc }}">
             {% endif %}
+
+            <!-- DNI del paciente -->
+            <div class="form-group mb-3">
+              <label>DNI del Paciente</label>
+              <input type="text" name="dni" class="form-control" required>
+              {% if errors.dni %}
+              <small class="text-danger">{{ errors.dni }}</small>
+              {% endif %}
+            </div>
 
             <!-- Clasificación -->
             <div class="form-group mb-3">
