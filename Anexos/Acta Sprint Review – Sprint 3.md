@@ -7,7 +7,8 @@
 **Requerimientos trabajados:**
 - **RF6:** Priorización y triage en la cola  
 - **RF9:** Protección anti-abuso (limitación de agendamientos)
-- **RF7:** Integración con historia clínica (EHR) 
+- **RF7:** Integración con historia clínica (EHR)
+
 **Requerimientos no finalizados:**
 - **RF8:** Reglas de negocio de cupos (capacidad) 
 ---
