@@ -166,6 +166,22 @@ def registrar_cita_paciente(request, paciente_id):
         # doctor_id es DoctorDetalle.id
         doctor_detalle = get_object_or_404(DoctorDetalle, id=doctor_id)
 
+        # ---- VALIDACIÓN ANTI-ABUSO ----
+        # Verificar si el paciente ya tiene 2 citas activas para esta especialidad
+        especialidad = doctor_detalle.especialidad
+
+        citas_activas = Cita.objects.filter(
+            paciente=paciente,
+            doctor_horario__doctor__especialidad=especialidad,
+            estado__in=["pendiente", "confirmada"]  # Ajusta según tus estados válidos
+        ).count()
+
+        if citas_activas >= 2:
+            messages.error(request, "Límite de citas activas alcanzado para esta especialidad")
+            return redirect("lista_citas_paciente", paciente_id=paciente_id)
+        # --------------------------------
+
+
         # 1) Registrar en la waitlist
         solicitar_cita(
             paciente=paciente,
