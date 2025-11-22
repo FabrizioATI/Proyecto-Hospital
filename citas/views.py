@@ -22,11 +22,16 @@ def index(request):
 
 # CRUD de Citas
 def lista_citas_paciente(request, paciente_id):
+    # Filtra las citas del paciente y ordena por fecha de creación (más recientes primero)
     citas = Cita.objects.select_related(
         "paciente", "doctor_horario__doctor__entidad", "doctor_horario__horario"
-    ).filter(paciente_id=paciente_id)
+    ).filter(paciente_id=paciente_id).order_by('-fecha_creacion')  # Ordenar por la fecha de creación
+
+    # Puedes agregar más filtros aquí si es necesario, por ejemplo, solo citas confirmadas:
+    # citas = citas.filter(estado='confirmada')
 
     return render(request, "citas/lista_citas.html", {"citas": citas})
+
 
 def editar_cita_paciente(request, paciente_id, pk):
     cita = get_object_or_404(Cita, pk=pk, paciente_id=paciente_id)
@@ -81,25 +86,36 @@ def lista_citas_doctor(request, doctor_id):
 def checkin_view(request, cita_id):
     cita = get_object_or_404(Cita, pk=cita_id)
 
-    # Registrar el check-in como antes
-    services.registrar_checkin(cita)
+    # Verificar si la cita ya fue atendida
+    if cita.estado != "ATENDIDA":  # Si la cita no ha sido atendida previamente
+        # Registrar el check-in (puede incluir alguna lógica adicional, como el tiempo de llegada)
+        services.registrar_checkin(cita)
+        print(f"Check-in realizado para la cita #{cita.id}")
 
-    # Vincular con EHR (simulado)
-    if not cita.ehr_id:
-        ehr_id = f"EHR-{cita.paciente.dni}"
-        cita.ehr_id = ehr_id
-        cita.estado = "confirmada"  # marcamos la cita como confirmada al hacer check-in
-        cita.save()
+        # Vinculación con EHR (simulado)
+        if not cita.ehr_id:
+            # Generar un ID único de EHR usando el DNI del paciente
+            ehr_id = f"EHR-{cita.paciente.dni}"  # El ID se genera con el DNI del paciente
+            cita.ehr_id = ehr_id
+            cita.estado = "confirmada"  # Cambiar el estado de la cita a confirmada
 
-        messages.success(
-            request,
-            f"Cita vinculada exitosamente con el registro EHR del paciente: {ehr_id}"
-        )
+            cita.save()  # Guardamos los cambios
+            print(f"Estado de la cita #{cita.id} actualizado a 'confirmada'. EHR ID: {ehr_id}")
+
+            messages.success(
+                request,
+                f"Cita vinculada exitosamente con el registro EHR del paciente: {ehr_id}"
+            )
+        else:
+            messages.info(request, f"La cita ya estaba vinculada con el ID EHR: {cita.ehr_id}")
+
     else:
-        messages.info(request, f"La cita ya estaba vinculada con el ID EHR: {cita.ehr_id}")
+        messages.info(request, "Esta cita ya ha sido atendida previamente.")
 
-    # Mostrar resultado
+    # Mostrar resultado (confirmación)
     return render(request, 'citas/checkin_exitoso.html', {'cita': cita})
+
+
 
 def cancelar_cita_view(request, cita_id):
     cita = get_object_or_404(Cita, pk=cita_id)
@@ -126,7 +142,7 @@ def cancelar_cita_view(request, cita_id):
     return redirect('lista_citas_paciente', paciente_id=cita.paciente.id)
  
 def registrar_cita_paciente(request, paciente_id):
-    paciente = get_object_or_404(Entidad, id=paciente_id)
+    paciente = get_object_or_404(Entidad, id=paciente_id) # Verificar que el paciente exista
     errors = {}
 
     # ----------- GET: cargar combos --------------
@@ -147,11 +163,15 @@ def registrar_cita_paciente(request, paciente_id):
         clasificacion = request.POST.get("clasificacion") or "REGULAR"
         tipo_cita = request.POST.get("tipo_cita") or "PRESENCIAL" 
         motivo = request.POST.get("motivo")
+        dni = request.POST.get("dni") # Obtener el DNI ingresado
+
 
         if not doctor_id:
             errors["doctor_id"] = "Debe seleccionar un médico."
         if not motivo:
             errors["motivo"] = "Debe ingresar un motivo."
+        if not dni:
+            errors["dni"] = "Debe ingresar un DNI."
 
         if errors:
             return render(request, "citas/registrar_cita.html", {
@@ -162,6 +182,9 @@ def registrar_cita_paciente(request, paciente_id):
                 "selected_esp": especialidad_id,
                 "selected_doc": selected_doc,
             })
+        
+        # Verificar si el paciente existe usando el DNI
+        paciente = get_object_or_404(Entidad, dni=dni)  # Validación del DNI del paciente
 
         # doctor_id es DoctorDetalle.id
         doctor_detalle = get_object_or_404(DoctorDetalle, id=doctor_id)

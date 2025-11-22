@@ -139,6 +139,9 @@ class Cita(models.Model):
         max_length=20, choices=TIPO_CITA, default="PRESENCIAL"
     )
 
+    # Campo para almacenar el EHR ID del paciente
+    ehr_id = models.CharField(max_length=50, blank=True, null=True)
+
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
