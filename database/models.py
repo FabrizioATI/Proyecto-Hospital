@@ -49,6 +49,8 @@ class RolEntidad(models.Model):
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
+    # Capacidad máxima de cupos por hora para esta especialidad (ej: 10)
+    capacidad_por_hora = models.PositiveIntegerField(default=10)
 
     def __str__(self):
         return self.nombre

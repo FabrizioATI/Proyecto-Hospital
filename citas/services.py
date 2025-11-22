@@ -91,11 +91,31 @@ def procesar_cola_doctor(doctor_detalle: DoctorDetalle):
     items.sort(key=lambda i: (_get_prioridad_num(i.clasificacion), i.fecha_solicitud))
 
     # 3. Emparejar items con horarios
-    for idx, horario in enumerate(horarios):
-        if idx >= len(items):
+    # Se usa un índice separado porque algunos horarios pueden ser saltados
+    # si la capacidad por hora de la especialidad ya está completa.
+    item_idx = 0
+    for horario in horarios:
+        if item_idx >= len(items):
             break
 
-        item = items[idx]
+        # Capacidad por hora por especialidad (ej: 10)
+        especialidad = horario.doctor.especialidad
+        fecha = horario.horario.fecha
+        hora = horario.horario.hora_inicio
+
+        current_count = Cita.objects.filter(
+            doctor_horario__horario__fecha=fecha,
+            doctor_horario__horario__hora_inicio=hora,
+            doctor_horario__doctor__especialidad=especialidad,
+            estado="EN_ESPERA",
+        ).count()
+
+        capacidad = getattr(especialidad, 'capacidad_por_hora', 10)
+        if current_count >= capacidad:
+            # La especialidad ya alcanzó el límite para este horario; no asignamos aquí
+            continue
+
+        item = items[item_idx]
         item.doctor_horario = horario
         item.estado = 'aceptado'
         item.save()
@@ -110,6 +130,8 @@ def procesar_cola_doctor(doctor_detalle: DoctorDetalle):
                 "estado": "EN_ESPERA",
             }
         )
+
+        item_idx += 1
 
     # 4. Resto se queda sin horario (cola pura)
     for item in items[len(horarios):]:
