@@ -225,3 +225,19 @@ def liberar_horario(doctor_horario: DoctorHorario):
 
     # 4) Reprocesar cola con los horarios restantes
     procesar_cola_doctor(doctor_detalle)
+
+@transaction.atomic
+def registrar_checkin(cita):
+    """
+    Registra el check-in de la cita. 
+    Vincula la cita con un EHR ID y cambia el estado de la cita a "confirmada".
+    """
+    # Verificar si ya tiene un EHR ID. Si no lo tiene, generarlo.
+    if not cita.ehr_id:
+        ehr_id = f"EHR-{cita.paciente.dni}"  # Usamos el DNI del paciente para generar un ID único
+        cita.ehr_id = ehr_id
+        cita.estado = "confirmada"  # Cambiar el estado de la cita a confirmada
+        cita.save()
+    else:
+        # Si ya tiene un EHR ID, no hacemos nada
+        pass
