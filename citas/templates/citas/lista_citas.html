@@ -35,50 +35,71 @@
                   <th>Estado</th>
                   <th>Motivo</th>
 
-                  {# Mostrar columna de mantenimiento solo si no es doctor #}
+                  {# Acciones para DOCTOR #}
+                  {% if tipo_usuario == 'doctor' %}
+                    <th class="text-end">Acciones</th>
+                  {% endif %}
+
+                  {# Acciones para Paciente/Admin (ya las tenías) #}
                   {% if tipo_usuario != 'doctor' %}
-                  <th>Mantenimiento</th>
+                    <th>Mantenimiento</th>
                   {% endif %}
                 </tr>
               </thead>
+
               <tbody>
-                {% for c in citas %}
+              {% for c in citas %}
                 <tr>
                   {% if tipo_usuario == 'doctor' %}
                     <td>{{ c.paciente.nombre }} {{ c.paciente.apellidoPaterno }}</td>
                   {% else %}
                     <td>{{ c.doctor_horario.doctor.entidad.nombre }} {{ c.doctor_horario.doctor.entidad.apellidoPaterno }}</td>
                   {% endif %}
+
                   <td>{{ c.doctor_horario.doctor.especialidad.nombre }}</td>
                   <td>{{ c.doctor_horario.horario.fecha|date:"d/m/Y" }}</td>
                   <td>{{ c.doctor_horario.horario.hora_inicio|time:"h:i a" }}</td>
                   <td>{{ c.doctor_horario.horario.hora_fin|time:"h:i a" }}</td>
-                  <td>{{ c.get_tipo_cita_display  }}</td>
+                  <td>{{ c.get_tipo_cita_display }}</td>
                   <td>{{ c.estado|title }}</td>
                   <td>{{ c.motivo }}</td>
 
+                  {# Acciones para DOCTOR: usar <a>, no button #}
+                  {% if tipo_usuario == 'doctor' %}
+                    <td class="text-end">
+                      {% if c.estado != 'ATENDIDA' %}
+                        <a href="{% url 'marcar_cita_atendida' c.id %}" class="btn btn-sm btn-success">
+                          Marcar atendida
+                        </a>
+                      {% endif %}
+                      {% if c.estado != 'CANCELADA' %}
+                        <a href="{% url 'cancelar_cita' c.id %}" class="btn btn-sm btn-danger">Cancelar</a>
+                      {% endif %}
+                    </td>
+                  {% endif %}
+
+                  {# Acciones para Paciente/Admin (lo que ya tenías) #}
                   {% if tipo_usuario != 'doctor' %}
-                  <td class="text-end">
-                    <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
-                    {% if c.estado == 'EN_ESPERA' %}
-                      <a href="{% url 'checkin' c.id %}"
-                        class="btn btn-sm btn-primary">
-                        Hacer check-in
-                      </a>
-                    {% endif %}
-                    <a href="{% url 'cancelar_cita' c.id %}" class="btn btn-sm btn-danger"> Cancelar </a>
-                    <!-- <a href="{% url 'eliminar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta cita?');">Eliminar</a> -->
-                  </td>
+                    <td class="text-end">
+                      <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
+                      {% if c.estado == 'EN_ESPERA' %}
+                        <a href="{% url 'checkin' c.id %}" class="btn btn-sm btn-primary">Hacer check-in</a>
+                      {% endif %}
+                      {% if c.estado != 'CANCELADA' %}
+                        <a href="{% url 'cancelar_cita' c.id %}" class="btn btn-sm btn-danger">Cancelar</a>
+                      {% endif %}
+                    </td>
                   {% endif %}
                 </tr>
-                {% empty %}
+              {% empty %}
                 <tr>
-                  <td colspan="{% if tipo_usuario == 'doctor' %}9{% else %}10{% endif %}" class="text-center text-muted">
+                  <td colspan="{% if tipo_usuario == 'doctor' %}10{% else %}10{% endif %}" class="text-center text-muted">
                     No hay citas registradas
                   </td>
                 </tr>
-                {% endfor %}
+              {% endfor %}
               </tbody>
+
             </table>
           </div>
         </div>

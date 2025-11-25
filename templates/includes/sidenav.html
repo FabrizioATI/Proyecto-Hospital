@@ -27,6 +27,13 @@
             </a>
           </li>
 
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lista_historias_clinicas' %}">
+              <i class="ni ni-collection text-info"></i>
+              <span class="nav-link-text">Historias Clínicas</span>
+            </a>
+          </li>
+
           {% elif request.session.codigo_rol == "002" %}
           <!-- Menú para Paciente -->
           <li class="nav-item">
@@ -61,7 +68,20 @@
             </a>
           </li>
 
-          
+          <li class="nav-item">
+            <a class="nav-link {% if 'citas' in segment %} active {% endif %}"
+              href="{% url 'lista_citas_paciente' request.session.entidad_id %}">
+              <i class="ni ni-calendar-grid-58 text-orange"></i>
+              <span class="nav-link-text">Lista de Citas</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lista_historias_clinicas' %}">
+              <i class="ni ni-collection text-info"></i>
+              <span class="nav-link-text">Historias Clínicas</span>
+            </a>
+          </li>
           {% endif %}
 
         </ul>

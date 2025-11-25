@@ -10,40 +10,49 @@
         <div class="card-header bg-success text-white text-center">
           <h3 class="mb-0">✅ Check-In Exitoso</h3>
         </div>
+
         <div class="card-body text-center py-5">
           <h4 class="text-success mb-3">Tu cita ha sido confirmada correctamente</h4>
+
           <p class="mb-4">
             Gracias, <strong>{{ cita.paciente.nombre }} {{ cita.paciente.apellidoPaterno }}</strong>.<br>
             Tu cita con el Dr(a). <strong>{{ cita.doctor_horario.doctor.entidad.nombre }}</strong>
-            ha sido registrada y confirmada para el <strong>{{ cita.doctor_horario.horario.fecha|date:"d/m/Y" }}</strong> a las <strong>{{ cita.doctor_horario.horario.hora_inicio|time:"H:i" }}</strong>.
+            ha sido registrada y confirmada para el
+            <strong>{{ cita.doctor_horario.horario.fecha|date:"d/m/Y" }}</strong> a las
+            <strong>{{ cita.doctor_horario.horario.hora_inicio|time:"H:i" }}</strong>.
           </p>
 
-          <!-- 🔹 Mensaje de vinculación EHR -->
-          {% if cita.ehr_id %}
-          <div class="alert alert-info text-start shadow-sm">
-            <h5 class="alert-heading">Vinculación con Historia Clínica (EHR)</h5>
-            <p class="mb-1">
-              Esta cita se encuentra asociada correctamente al registro único del paciente en el sistema EHR.
-            </p>
-            <p class="mb-0">
-             <strong>ID EHR Vinculado:</strong>
-             <span style="font-weight: bold; color: #000;">
-                {{ cita.ehr_id }}
-             </span>
-            </p>
-          </div>
+          {# ========= BLOQUE HISTORIA CLÍNICA / EPISODIO ========= #}
+          {% if cita.paciente.historia_clinica %}
+            <div class="alert alert-info text-start shadow-sm">
+              <h5 class="alert-heading">Historia Clínica</h5>
+              <p class="mb-1">La cita está asociada a la historia clínica del paciente.</p>
+              <p class="mb-0">
+                <strong>N° Historia:</strong>
+                {{ cita.paciente.historia_clinica.numero }}
+              </p>
+
+              {% if cita.episodio %}
+                <p class="mb-0">
+                  <strong>Episodio:</strong>
+                  #{{ cita.episodio.id }} ({{ cita.episodio.tipo }}, {{ cita.episodio.estado }})
+                </p>
+              {% endif %}
+            </div>
           {% else %}
-          <div class="alert alert-warning text-start shadow-sm">
-            <h5 class="alert-heading">⚠️ Información EHR no disponible</h5>
-            <p>Esta cita aún no ha sido vinculada con un registro del EHR. Si esto persiste, por favor contacta a soporte.</p>
-          </div>
+            <div class="alert alert-warning text-start shadow-sm">
+              <h5 class="alert-heading">Historia no creada</h5>
+              <p>La historia clínica aún no se generó. Vuelve a intentar el check-in.</p>
+            </div>
           {% endif %}
+          {# ========= /BLOQUE ========= #}
 
           <div class="mt-4">
             <a href="{% url 'lista_citas_paciente' cita.paciente.id %}" class="btn btn-primary px-4">
               Volver a mis citas
             </a>
           </div>
+
         </div>
       </div>
     </div>

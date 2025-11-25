@@ -1,5 +1,4 @@
 {% extends 'layouts/base.html' %}
-
 {% block title %} Registrar Cita {% endblock title %}
 
 {% block content %}
@@ -12,8 +11,26 @@
         </div>
         <div class="card-body">
 
-          <!-- FORMULARIO GET (filtros) -->
-          <form method="get" class="mb-4">
+          <!-- =========================
+               FORM GET (FILTROS)
+          ========================== -->
+          <form method="get" class="mb-4" id="filtersForm">
+
+            <!-- PACIENTE (solo admin ve el select) -->
+            {% if es_admin %}
+              <div class="form-group mb-3">
+                <label>Paciente</label>
+                <select name="paciente_sel" class="form-control" onchange="this.form.submit()">
+                  <option value="">-- Seleccione paciente --</option>
+                  {% for p in pacientes %}
+                    <option value="{{ p.id }}"
+                      {% if p.id|stringformat:'s' == selected_paciente_id|stringformat:'s' %}selected{% endif %}>
+                      {{ p.dni }} — {{ p.nombre }} {{ p.apellidoPaterno }} {{ p.apellidoMaterno }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            {% endif %}
 
             <!-- Especialidad -->
             <div class="form-group mb-3">
@@ -21,9 +38,9 @@
               <select name="especialidad" class="form-control" onchange="this.form.submit()">
                 <option value="">-- Seleccione especialidad --</option>
                 {% for esp in especialidades %}
-                <option value="{{ esp.id }}" {% if esp.id == selected_esp %} selected{% endif %}>
-                  {{ esp.nombre }}
-                </option>
+                  <option value="{{ esp.id }}" {% if esp.id == selected_esp %}selected{% endif %}>
+                    {{ esp.nombre }}
+                  </option>
                 {% endfor %}
               </select>
             </div>
@@ -34,10 +51,10 @@
               <select name="doctor" class="form-control" {% if not doctores %}disabled{% endif %} onchange="this.form.submit()">
                 <option value="">-- Seleccione doctor --</option>
                 {% for doc in doctores %}
-                <option value="{{ doc.id }}" {% if doc.id == selected_doc %} selected{% endif %}>
-                  Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
-                  ({{ doc.especialidad.nombre }})
-                </option>
+                  <option value="{{ doc.id }}" {% if doc.id == selected_doc %}selected{% endif %}>
+                    Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
+                    ({{ doc.especialidad.nombre }})
+                  </option>
                 {% endfor %}
               </select>
             </div>
@@ -46,70 +63,80 @@
 
           <!-- INFO DOCTOR SELECCIONADO -->
           {% if selected_doc %}
-          <div class="alert alert-info">
-            {% for doc in doctores %}
-            {% if doc.id == selected_doc %}
-            <strong>Doctor seleccionado:</strong>
-            Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
-            – {{ doc.especialidad.nombre }}
-            {% endif %}
-            {% endfor %}
-          </div>
+            <div class="alert alert-info">
+              {% for doc in doctores %}
+                {% if doc.id == selected_doc %}
+                  <strong>Doctor seleccionado:</strong>
+                  Dr. {{ doc.entidad.nombre }} {{ doc.entidad.apellidoPaterno }} {{ doc.entidad.apellidoMaterno }}
+                  – {{ doc.especialidad.nombre }}
+                {% endif %}
+              {% endfor %}
+            </div>
           {% else %}
-          <div class="alert alert-warning">
-            Selecciona una especialidad y un doctor antes de registrar la cita.
-          </div>
+            <div class="alert alert-warning">
+              Selecciona una especialidad y un doctor antes de registrar la cita.
+            </div>
           {% endif %}
 
-          <!-- FORMULARIO POST (cita) -->
+          <!-- =========================
+               FORM POST (CREAR CITA)
+          ========================== -->
           <form method="post">
             {% csrf_token %}
 
             {% if selected_doc %}
-            <input type="hidden" name="doctor_id" value="{{ selected_doc }}">
+              <input type="hidden" name="doctor_id" value="{{ selected_doc }}">
+            {% endif %}
+
+            {% if es_admin and selected_paciente_id %}
+              <input type="hidden" name="paciente_sel" value="{{ selected_paciente_id }}">
             {% endif %}
 
             <!-- DNI del paciente -->
             <div class="form-group mb-3">
               <label>DNI del Paciente</label>
-              <input type="text" name="dni" class="form-control" required>
-              {% if errors.dni %}
-              <small class="text-danger">{{ errors.dni }}</small>
-              {% endif %}
+              <input type="text" name="dni" class="form-control"
+                     placeholder="{% if es_admin %}Opcional si ya seleccionaste paciente{% else %}Obligatorio{% endif %}">
+              {% if errors.dni %}<small class="text-danger">{{ errors.dni }}</small>{% endif %}
             </div>
 
             <!-- Clasificación -->
             <div class="form-group mb-3">
               <label>Clasificación</label>
-              <select name="clasificacion" class="form-control" required>
-                <option value="EMERGENCIA">Emergencia</option>
-                <option value="ADULTO_MAYOR">Adulto mayor</option>
-                <option value="REGULAR" selected>Regular</option>
-              </select>
-              {% if errors.clasificacion %}
-              <small class="text-danger">{{ errors.clasificacion }}</small>
+
+              {% if es_admin %}
+                <!-- Admin: puede elegir todas -->
+                <select name="clasificacion" class="form-control" required>
+                  <option value="EMERGENCIA"   {% if request.POST.clasificacion == 'EMERGENCIA' %}selected{% endif %}>Emergencia</option>
+                  <option value="ADULTO_MAYOR" {% if request.POST.clasificacion == 'ADULTO_MAYOR' %}selected{% endif %}>Adulto mayor</option>
+                  <option value="REGULAR"      {% if request.POST.clasificacion|default:'REGULAR' == 'REGULAR' %}selected{% endif %}>Regular</option>
+                </select>
+              {% else %}
+                <!-- Otros roles: solo Adulto Mayor y Regular -->
+                <select name="clasificacion" class="form-control" required>
+                  <option value="ADULTO_MAYOR" {% if request.POST.clasificacion == 'ADULTO_MAYOR' %}selected{% endif %}>Adulto mayor</option>
+                  <option value="REGULAR"      {% if request.POST.clasificacion|default:'REGULAR' == 'REGULAR' %}selected{% endif %}>Regular</option>
+                </select>
               {% endif %}
+
+              {% if errors.clasificacion %}<small class="text-danger">{{ errors.clasificacion }}</small>{% endif %}
             </div>
 
             <!-- Tipo de cita-->
             <div class="form-group mb-3">
               <label>Tipo de cita</label>
               <select name="tipo_cita" class="form-control" required>
-                <option value="PRESENCIAL" selected>Presencial</option>
-                <option value="VIRTUAL">Virtual</option>
+                <option value="PRESENCIAL" {% if request.POST.tipo_cita|default:'PRESENCIAL' == 'PRESENCIAL' %}selected{% endif %}>Presencial</option>
+                <option value="VIRTUAL"    {% if request.POST.tipo_cita == 'VIRTUAL' %}selected{% endif %}>Virtual</option>
               </select>
-              {% if errors.tipo_cita %}
-              <small class="text-danger">{{ errors.tipo_cita }}</small>
-              {% endif %}
+              {% if errors.tipo_cita %}<small class="text-danger">{{ errors.tipo_cita }}</small>{% endif %}
             </div>
 
             <!-- Motivo -->
             <div class="form-group mb-3">
               <label>Motivo</label>
-              <textarea name="motivo" class="form-control" rows="3" required></textarea>
-              {% if errors.motivo %}
-              <small class="text-danger">{{ errors.motivo }}</small>
-              {% endif %}
+              <textarea name="motivo" class="form-control" rows="3" required>{{ request.POST.motivo }}</textarea>
+              {% if errors.motivo %}<small class="text-danger">{{ errors.motivo }}</small>{% endif %}
             </div>
 
             <!-- Botones -->
