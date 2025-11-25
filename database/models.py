@@ -232,3 +232,83 @@ class Holiday(models.Model):
 
     def __str__(self):
         return f"{self.fecha} - {self.nombre or 'Feriado'}"
+
+
+# ============================================================
+# LISTA DE FERIADOS
+# ============================================================
+
+
+# === EHR / Historia Clínica ===
+class HistoriaClinica(models.Model):
+    """Historia clínica única por paciente."""
+    paciente = models.OneToOneField(
+        Entidad, on_delete=models.CASCADE, related_name='historia_clinica'
+    )
+    # Un identificador legible (ej. HCL-<DNI>), puedes personalizarlo
+    numero = models.CharField(max_length=50, unique=True, blank=True, null=True)
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Autogenera numero si no existe (ej. HCL-<DNI>)
+        if not self.numero and self.paciente and self.paciente.dni:
+            self.numero = f"HCL-{self.paciente.dni}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.numero or 'HCL'} - {self.paciente.nombre_completo()}"
+
+
+class EpisodioClinico(models.Model):
+    """Episodio ligado a una cita (consulta), internamiento, emergencia, etc."""
+    ESTADOS = [
+        ('abierto', 'Abierto'),
+        ('cerrado', 'Cerrado'),
+    ]
+    TIPO = [
+        ('consulta', 'Consulta'),
+        ('emergencia', 'Emergencia'),
+        ('seguimiento', 'Seguimiento'),
+    ]
+
+    historia = models.ForeignKey(
+        HistoriaClinica, on_delete=models.CASCADE, related_name='episodios'
+    )
+    cita = models.OneToOneField(
+        Cita, on_delete=models.SET_NULL, null=True, blank=True, related_name='episodio'
+    )
+
+    tipo = models.CharField(max_length=20, choices=TIPO, default='consulta')
+    motivo = models.TextField(blank=True, null=True)
+
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='abierto')
+    inicio = models.DateTimeField(auto_now_add=True)
+    fin = models.DateTimeField(blank=True, null=True)
+
+    def cerrar(self):
+        self.estado = 'cerrado'
+        self.fin = timezone.now()
+        self.save(update_fields=['estado', 'fin'])
+
+    def __str__(self):
+        base = f"Episodio #{self.id} - {self.historia.numero}"
+        return f"{base} ({self.tipo}, {self.estado})"
+
+
+class NotaEvolucion(models.Model):
+    """Notas/Registros dentro del episodio (anamnesis, evolución, indicaciones)."""
+    episodio = models.ForeignKey(
+        EpisodioClinico, on_delete=models.CASCADE, related_name='notas'
+    )
+    autor = models.ForeignKey(
+        Entidad, on_delete=models.SET_NULL, null=True, blank=True, related_name='notas_autor'
+    )  # normalmente el doctor
+    titulo = models.CharField(max_length=150, blank=True, null=True)
+    contenido = models.TextField()  # texto libre (anamnesis, hallazgos, plan)
+    signos_vitales = models.JSONField(blank=True, null=True)  # opcional: {temp, fc, pa, spo2, ...}
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Nota #{self.id} - Episodio {self.episodio_id}"

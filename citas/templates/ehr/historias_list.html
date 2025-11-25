@@ -1,0 +1,53 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Historias Clínicas{% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card shadow">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">Historias Clínicas</h3>
+      <form class="d-flex" method="get">
+        <input name="q" value="{{ q }}" class="form-control form-control-sm me-2" placeholder="Buscar DNI / nombre / N° historia">
+        <button class="btn btn-sm btn-primary">Buscar</button>
+      </form>
+    </div>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>N° Historia</th>
+              <th>DNI</th>
+              <th>Paciente</th>
+              <th>Total Episodios</th>
+              <th>Total Notas</th>
+              <th>Última Atención</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for h in historias %}
+            <tr>
+              <td>{{ h.numero }}</td>
+              <td>{{ h.paciente.dni }}</td>
+              <td>{{ h.paciente.apellidoPaterno }} {{ h.paciente.apellidoMaterno }}, {{ h.paciente.nombre }}</td>
+              <td>{{ h.total_episodios|default:"0" }}</td>
+              <td>{{ h.total_notas|default:"0" }}</td>
+              <td>{% if h.ultima_atencion %}{{ h.ultima_atencion|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+              <td>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'detalle_historia_clinica' h.id %}">
+                  Ver detalle
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="text-center text-muted">Sin historias clínicas</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

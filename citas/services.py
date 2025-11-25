@@ -196,6 +196,11 @@ def cancelar_y_ofertar(cita: Cita):
     return next_wait
 
 @transaction.atomic
+def atender_y_asociar(cita):
+    cita.estado = "ATENDIDA"
+    cita.save()
+
+@transaction.atomic
 def liberar_horario(doctor_horario: DoctorHorario):
     """
     Elimina un DoctorHorario de forma segura:

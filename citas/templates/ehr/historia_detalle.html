@@ -1,0 +1,70 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Historia Clínica{% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card shadow">
+    <div class="card-header">
+      <h3 class="mb-0">Historia Clínica – {{ historia.numero }}</h3>
+      <small class="text-muted">
+        Paciente: <strong>{{ historia.paciente.apellidoPaterno }} {{ historia.paciente.apellidoMaterno }}, {{ historia.paciente.nombre }}</strong>
+        &nbsp;|&nbsp; DNI: <strong>{{ historia.paciente.dni }}</strong>
+      </small>
+    </div>
+
+    <div class="card-body">
+      <h5 class="mb-3">Episodios</h5>
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>ID</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Cita</th>
+              <th>Motivo</th>
+              <th># Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for e in episodios %}
+            <tr>
+              <td>{{ e.id }}</td>
+              <td>{{ e.tipo|title }}</td>
+              <td>{{ e.estado|title }}</td>
+              <td>{{ e.inicio|date:"Y-m-d H:i" }}</td>
+              <td>{% if e.fin %}{{ e.fin|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+              <td>{% if e.cita %}#{{ e.cita.id }} ({{ e.cita.get_tipo_cita_display }}){% else %}-{% endif %}</td>
+              <td>{{ e.motivo|default:"-" }}</td>
+              <td>{{ e.total_notas|default:"0" }}</td>
+            </tr>
+
+            {% for n in e.notas.all %}
+              <tr class="table-light">
+                <td colspan="8">
+                  <div>
+                    <strong>Nota #{{ n.id }}</strong> – {{ n.creado_en|date:"Y-m-d H:i" }}
+                    {% if n.autor %} | Autor: {{ n.autor.nombre }} {{ n.autor.apellidoPaterno }}{% endif %}
+                  </div>
+                  {% if n.titulo %}<div><em>{{ n.titulo }}</em></div>{% endif %}
+                  <div>{{ n.contenido }}</div>
+                </td>
+              </tr>
+            {% endfor %}
+            
+          {% empty %}
+            <tr><td colspan="8" class="text-center text-muted">No hay episodios</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-3">
+        <a href="{% url 'lista_historias_clinicas' %}" class="btn btn-secondary">Volver al listado</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
