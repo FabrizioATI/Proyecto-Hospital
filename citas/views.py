@@ -17,6 +17,8 @@ from database.models import (
 from django.db.models import Q
 from django.db.models import Count, Max
 from functools import wraps
+from django.utils import timezone
+from datetime import timedelta
 
 #Index
 def index(request):
@@ -308,6 +310,58 @@ def registrar_cita_paciente(request, paciente_id):
         if citas_activas >= 2:
             messages.error(request, "Límite de citas activas alcanzado para esta especialidad")
             return redirect("lista_citas_paciente", paciente_id=paciente_obj.id)
+
+        
+            # --- Verificar cupos diarios / semanales del doctor ---
+        # Obtener capacidades configuradas en DoctorDetalle (opcional)
+        cupos_diarios = doctor_detalle.cupos_diarios
+        cupos_semanales = doctor_detalle.cupos_semanales
+
+        hoy = timezone.now().date()
+        inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes
+        fin_semana = inicio_semana + timedelta(days=6)
+
+        # Contar citas EN_ESPERA asignadas al doctor para día y semana
+        citas_dia = Cita.objects.filter(
+            doctor_horario__doctor=doctor_detalle,
+            doctor_horario__horario__fecha=hoy,
+            estado="EN_ESPERA",
+        ).count()
+
+        citas_semana = Cita.objects.filter(
+            doctor_horario__doctor=doctor_detalle,
+            doctor_horario__horario__fecha__gte=inicio_semana,
+            doctor_horario__horario__fecha__lte=fin_semana,
+            estado="EN_ESPERA",
+        ).count()
+
+        capacidad_diaria_agotada = (cupos_diarios is not None and citas_dia >= cupos_diarios)
+        capacidad_semanal_agotada = (cupos_semanales is not None and citas_semana >= cupos_semanales)
+
+        if capacidad_diaria_agotada or capacidad_semanal_agotada:
+            # Si el usuario POSTEA y ha indicado aceptar lista de espera, continuamos
+            aceptar_wait = request.POST.get("aceptar_waitlist")
+            if not aceptar_wait:
+                # Renderizamos la página con la opción de aceptar lista de espera o elegir otro doctor
+                messages.warning(request, "Los cupos del doctor están agotados para la fecha/semana seleccionada.")
+                return render(request, "citas/registrar_cita.html", {
+                    "especialidades": especialidades,
+                    "paciente": paciente_url,
+                    "doctores": doctores,
+                    "errors": errors,
+                    "selected_esp": int(especialidad_id) if especialidad_id else None,
+                    "selected_doc": int(selected_doc) if selected_doc else None,
+                    "pacientes": pacientes_list,
+                    "es_admin": es_admin,
+                    "selected_paciente_id": paciente_sel,
+                    "capacidad_agotada": True,
+                    "capacidad_diaria_agotada": capacidad_diaria_agotada,
+                    "capacidad_semanal_agotada": capacidad_semanal_agotada,
+                    "citas_dia": citas_dia,
+                    "citas_semana": citas_semana,
+                    "cupos_diarios": cupos_diarios,
+                    "cupos_semanales": cupos_semanales,
+                })
 
         # Registrar solicitud (waitlist / motor)
         solicitar_cita(

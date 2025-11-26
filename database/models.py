@@ -60,6 +60,9 @@ class DoctorDetalle(models.Model):
     entidad = models.ForeignKey(Entidad, on_delete=models.CASCADE)
     especialidad = models.ForeignKey(Especialidad, on_delete=models.CASCADE)
     nro_colegiatura = models.CharField(max_length=50, unique=True)
+    # Opcional: cupos por doctor (si no se define, se asume sin límite específico)
+    cupos_diarios = models.PositiveIntegerField(null=True, blank=True)
+    cupos_semanales = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"Dr. {self.entidad.nombre} ({self.especialidad.nombre})"

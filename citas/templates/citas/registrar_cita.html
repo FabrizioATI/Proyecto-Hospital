@@ -140,9 +140,26 @@
             </div>
 
             <!-- Botones -->
-            <button type="submit" class="btn btn-primary" {% if not selected_doc %}disabled{% endif %}>
-              Registrar Cita
-            </button>
+              {% if capacidad_agotada %}
+                <div class="alert alert-warning">
+                  Los cupos del doctor seleccionado están agotados.
+                  {% if capacidad_diaria_agotada %}<br>Capacidad diaria alcanzada ({{ citas_dia }} / {{ cupos_diarios }}).{% endif %}
+                  {% if capacidad_semanal_agotada %}<br>Capacidad semanal alcanzada ({{ citas_semana }} / {{ cupos_semanales }}).{% endif %}
+                </div>
+
+                <!-- Opciones: aceptar lista de espera o elegir otro doctor -->
+                <button type="submit" name="aceptar_waitlist" value="1" class="btn btn-primary">
+                  Aceptar y poner en lista de espera
+                </button>
+
+                <a href="?especialidad={{ selected_esp }}{% if es_admin and selected_paciente_id %}&paciente_sel={{ selected_paciente_id }}{% endif %}" class="btn btn-secondary">
+                  Elegir otro doctor
+                </a>
+              {% else %}
+                <button type="submit" class="btn btn-primary" {% if not selected_doc %}disabled{% endif %}>
+                  Registrar Cita
+                </button>
+              {% endif %}
             <a href="{% url 'lista_citas_paciente' request.session.entidad_id %}" class="btn btn-secondary">
               Cancelar
             </a>
