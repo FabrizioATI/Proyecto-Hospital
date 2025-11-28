@@ -170,9 +170,9 @@ import os
 #Reemplazar el segundo '' con las credenciales de tu cuenta, caso contrario usa esas de mi cuenta.
 #Preferible crea tu cuenta xddd
 
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', 'AC6717fa411a916618ee63c904b4ab5153')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '9e4a38a6915ddd7852ec5f24f744fb24')
-TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '+13855032617')
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', 'TU_TOKEN_AQUI')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', 'TU_TOKEN_AQUI')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', 'NUMERO AQUI')
 
 # Opción B: Para testing sin Twilio real, descomenta estas líneas y comenta las de arriba:
 # TWILIO_ACCOUNT_SID = 'test_account_sid'
