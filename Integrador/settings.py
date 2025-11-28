@@ -170,7 +170,7 @@ import os
 #Reemplazar el segundo '' con las credenciales de tu cuenta, caso contrario usa esas de mi cuenta.
 #Preferible crea tu cuenta xddd
 
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', 'TU_TOKEN_AQUI')
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', 'TU_TOKEN_AQUI')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', 'NUMERO AQUI')
 
