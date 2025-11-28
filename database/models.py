@@ -315,3 +315,67 @@ class NotaEvolucion(models.Model):
 
     def __str__(self):
         return f"Nota #{self.id} - Episodio {self.episodio_id}"
+
+
+# ============================================================
+# NOTIFICACIONES SMS (RF12)
+# ============================================================
+
+class SMSNotification(models.Model):
+    """
+    Registro de notificaciones SMS enviadas a pacientes.
+    Almacena intentos y estado de entrega para auditoría (RF12).
+    """
+    TIPO_CHOICES = [
+        ('recordatorio', 'Recordatorio'),
+        ('instrucciones', 'Instrucciones'),
+        ('llamado', 'Llamado a ingreso'),
+    ]
+
+    ESTADO_CHOICES = [
+        ('enviado', 'Enviado'),
+        ('entregado', 'Entregado'),
+        ('fallido', 'Fallido'),
+        ('pendiente', 'Pendiente'),
+    ]
+
+    cita = models.ForeignKey(
+        Cita, on_delete=models.CASCADE, related_name='sms_notifications'
+    )
+    paciente = models.ForeignKey(
+        Entidad, on_delete=models.CASCADE, related_name='sms_notificaciones'
+    )
+
+    telefono = models.CharField(max_length=20, help_text="Número de teléfono destino")
+    tipo = models.CharField(
+        max_length=20, choices=TIPO_CHOICES, default='recordatorio'
+    )
+
+    mensaje = models.TextField(help_text="Contenido del SMS")
+
+    estado = models.CharField(
+        max_length=20, choices=ESTADO_CHOICES, default='pendiente'
+    )
+
+    # Identificadores de Twilio para tracking
+    sid = models.CharField(
+        max_length=100, blank=True, null=True,
+        help_text="SID de Twilio para tracking"
+    )
+
+    intento = models.PositiveSmallIntegerField(default=1, help_text="Número de intento")
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_envio = models.DateTimeField(blank=True, null=True)
+    fecha_entrega = models.DateTimeField(blank=True, null=True)
+
+    respuesta_twilio = models.TextField(
+        blank=True, null=True, help_text="Respuesta JSON de Twilio"
+    )
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"SMS #{self.id} - {self.paciente.nombre_completo()} ({self.estado})"
+

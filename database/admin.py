@@ -22,3 +22,25 @@ admin.site.register(Holiday)
 admin.site.register(HistoriaClinica)
 admin.site.register(EpisodioClinico)
 admin.site.register(NotaEvolucion)
+
+
+@admin.register(SMSNotification)
+class SMSNotificationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'paciente', 'telefono', 'tipo', 'estado', 'fecha_creacion', 'intento')
+    list_filter = ('estado', 'tipo', 'fecha_creacion')
+    search_fields = ('paciente__nombre', 'paciente__apellidoPaterno', 'telefono', 'sid')
+    readonly_fields = ('fecha_creacion', 'fecha_envio', 'fecha_entrega', 'sid', 'respuesta_twilio')
+    fieldsets = (
+        ('Información General', {
+            'fields': ('paciente', 'cita', 'telefono')
+        }),
+        ('Notificación', {
+            'fields': ('tipo', 'mensaje', 'estado')
+        }),
+        ('Tracking de Twilio', {
+            'fields': ('sid', 'intento', 'respuesta_twilio')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_creacion', 'fecha_envio', 'fecha_entrega')
+        }),
+    )

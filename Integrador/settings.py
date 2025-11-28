@@ -159,3 +159,22 @@ MESSAGE_TAGS = {
     messages.WARNING: "warning",
     messages.ERROR: "danger",
 }
+
+# ============================================================
+# CONFIGURACIÓN TWILIO (RF12: Notificaciones SMS)
+# ============================================================
+# Obtener desde variables de entorno o .env
+import os
+
+# Opción A: Usar credenciales de Twilio reales
+#Reemplazar el segundo '' con las credenciales de tu cuenta, caso contrario usa esas de mi cuenta.
+#Preferible crea tu cuenta xddd
+
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', 'AC6717fa411a916618ee63c904b4ab5153')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '9e4a38a6915ddd7852ec5f24f744fb24')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '+13855032617')
+
+# Opción B: Para testing sin Twilio real, descomenta estas líneas y comenta las de arriba:
+# TWILIO_ACCOUNT_SID = 'test_account_sid'
+# TWILIO_AUTH_TOKEN = 'test_auth_token'
+# TWILIO_PHONE_NUMBER = '+1234567890'

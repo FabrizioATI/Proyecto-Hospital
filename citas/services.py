@@ -7,6 +7,7 @@ from database.models import (
     DoctorDetalle,
     DoctorHorario,
 )
+from .sms_service import enviar_sms_recordatorio
 
 PRIORIDAD_MAP = {
     'EMERGENCIA': 1,
@@ -236,6 +237,7 @@ def registrar_checkin(cita):
     """
     Registra el check-in de la cita. 
     Vincula la cita con un EHR ID y cambia el estado de la cita a "confirmada".
+    Envía SMS de recordatorio al paciente (RF12).
     """
     # Verificar si ya tiene un EHR ID. Si no lo tiene, generarlo.
     if not cita.ehr_id:
@@ -243,6 +245,15 @@ def registrar_checkin(cita):
         cita.ehr_id = ehr_id
         cita.estado = "confirmada"  # Cambiar el estado de la cita a confirmada
         cita.save()
+        
+        # RF12: Enviar SMS de recordatorio cuando la cita se confirma
+        try:
+            enviar_sms_recordatorio(cita, tipo='recordatorio')
+        except Exception as e:
+            # Log del error pero no bloquea la confirmación de cita
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Error al enviar SMS para cita #{cita.id}: {e}")
     else:
         # Si ya tiene un EHR ID, no hacemos nada
         pass
