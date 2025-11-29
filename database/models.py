@@ -379,3 +379,28 @@ class SMSNotification(models.Model):
     def __str__(self):
         return f"SMS #{self.id} - {self.paciente.nombre_completo()} ({self.estado})"
 
+
+class NotificationPreference(models.Model):
+
+    LANG_CHOICES = [
+        ("es", "Español"),
+        ("qu", "Quechua"),
+    ]
+
+    user = models.OneToOneField(
+        Entidad,
+        on_delete=models.CASCADE,
+        related_name="notif_pref"
+    )
+
+    sms_consent = models.BooleanField(default=False)
+    sms_language = models.CharField(
+        max_length=5,
+        choices=LANG_CHOICES,
+        default="es"
+    )
+
+    consent_updated_at = models.DateTimeField(auto_now=True)  # trazabilidad
+
+    def __str__(self):
+        return f"{self.user.dni} | consent={self.sms_consent} | lang={self.sms_language}"

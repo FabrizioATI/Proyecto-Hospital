@@ -5,7 +5,7 @@ Encargado de enviar recordatorios, instrucciones y llamados de ingreso.
 
 from django.conf import settings
 from django.utils import timezone
-from database.models import SMSNotification, Cita
+from database.models import SMSNotification, Cita, NotificationPreference
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 import json
@@ -13,6 +13,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+# ============================================================
+# Cliente Twilio
+# ============================================================
 
 def obtener_cliente_twilio():
     """
@@ -28,12 +32,16 @@ def obtener_cliente_twilio():
     return Client(account_sid, auth_token)
 
 
+# ============================================================
+# Envío de SMS
+# ============================================================
+
 def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
     """
-    Envía un SMS de recordatorio a un paciente con cita confirmada.
-    
+    Envía un SMS de notificación a un paciente con cita (recordatorio, instrucciones, llamado).
+
     Args:
-        cita: Objeto Cita con estado confirmado
+        cita: Objeto Cita
         tipo: Tipo de notificación ('recordatorio', 'instrucciones', 'llamado')
     
     Returns:
@@ -42,8 +50,8 @@ def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
     RF12: Registra el intento y estado de entrega
     """
     
-    # Validaciones
-    if not cita or cita.estado != 'confirmada':
+    # Validaciones básicas de la cita
+    if not cita or cita.estado != 'confirmada':  # ajusta este estado a tu flujo real
         logger.warning(f"Cita #{cita.id if cita else 'None'} no está confirmada")
         return False
     
@@ -51,6 +59,20 @@ def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
     if not paciente.telefono:
         logger.warning(f"Paciente {paciente.nombre_completo()} sin teléfono")
         return False
+
+    # Preferencias de notificación (consentimiento + idioma)
+    notif_pref = getattr(paciente, "notif_pref", None)
+
+    # Si no tiene preferencias o no dio consentimiento → NO se envía SMS
+    if not notif_pref or not notif_pref.sms_consent:
+        logger.info(
+            f"Paciente {paciente.nombre_completo()} no tiene consentimiento SMS; "
+            f"no se envía notificación."
+        )
+        return False
+
+    # Idioma preferido, por defecto español
+    lang = notif_pref.sms_language or "es"
     
     # Obtener cliente Twilio
     client = obtener_cliente_twilio()
@@ -58,8 +80,8 @@ def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
         logger.error("No se pudo obtener cliente de Twilio")
         return False
     
-    # Construir mensaje según tipo
-    mensaje = construir_mensaje_sms(cita, tipo)
+    # Construir mensaje según tipo + idioma
+    mensaje = construir_mensaje_sms(cita, tipo, lang=lang)
     if not mensaje:
         logger.error(f"No se pudo construir mensaje para tipo: {tipo}")
         return False
@@ -77,7 +99,7 @@ def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
         telefono=paciente.telefono,
         tipo=tipo,
         mensaje=mensaje,
-        estado='enviado',
+        estado='enviado',  # se actualizará según respuesta
         intento=1,
     )
     
@@ -117,7 +139,7 @@ def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
         return True
         
     except TwilioRestException as e:
-        # Registrar error de Twilio (RF12: registrar fallida)
+        # Registrar error de Twilio (RF12: registrar fallo)
         sms_notification.estado = 'fallido'
         sms_notification.fecha_envio = timezone.now()
         sms_notification.respuesta_twilio = json.dumps({
@@ -149,13 +171,18 @@ def enviar_sms_recordatorio(cita: Cita, tipo: str = 'recordatorio') -> bool:
         return False
 
 
-def construir_mensaje_sms(cita: Cita, tipo: str) -> str:
+# ============================================================
+# Construcción del mensaje (multilenguaje)
+# ============================================================
+
+def construir_mensaje_sms(cita: Cita, tipo: str, lang: str = "es") -> str:
     """
-    Construye el mensaje SMS según el tipo de notificación.
+    Construye el mensaje SMS según el tipo de notificación y el idioma.
     
     Args:
         cita: Objeto Cita
         tipo: 'recordatorio', 'instrucciones' o 'llamado'
+        lang: 'es' (español) o 'qu' (quechua)
     
     Returns:
         str: Mensaje formateado
@@ -168,30 +195,64 @@ def construir_mensaje_sms(cita: Cita, tipo: str) -> str:
     
     fecha_str = horario.fecha.strftime('%d/%m/%Y')
     hora_str = horario.hora_inicio.strftime('%H:%M')
-    
-    if tipo == 'recordatorio':
-        return (
-            f"Hola {paciente.nombre}, le recordamos su cita con el "
-            f"Dr. {doctor.apellidoPaterno} ({especialidad.nombre}) "
-            f"el {fecha_str} a las {hora_str}. ¡No olvide asistir!"
-        )
-    
-    elif tipo == 'instrucciones':
-        return (
-            f"Su cita es el {fecha_str} a las {hora_str} con "
-            f"el Dr. {doctor.apellidoPaterno}. Por favor, llegar 10 minutos antes. "
-            f"Tipo: {cita.tipo_cita}."
-        )
-    
-    elif tipo == 'llamado':
-        return (
-            f"{paciente.nombre}, se le convoca a ingresar ahora para su "
-            f"consulta con el Dr. {doctor.apellidoPaterno}. Presente en recepción."
-        )
-    
-    else:
-        return f"Recordatorio de cita para {paciente.nombre}"
 
+    # ==========================
+    # Mensajes en ESPAÑOL
+    # ==========================
+    if lang == "es":
+        if tipo == 'recordatorio':
+            return (
+                f"Hola {paciente.nombre}, le recordamos su cita con el "
+                f"Dr. {doctor.apellidoPaterno} ({especialidad.nombre}) "
+                f"el {fecha_str} a las {hora_str}. ¡No olvide asistir!"
+            )
+        
+        elif tipo == 'instrucciones':
+            return (
+                f"Su cita es el {fecha_str} a las {hora_str} con "
+                f"el Dr. {doctor.apellidoPaterno}. Por favor, llegue 10 minutos antes. "
+                f"Tipo: {cita.tipo_cita}."
+            )
+        
+        elif tipo == 'llamado':
+            return (
+                f"{paciente.nombre}, se le convoca a ingresar ahora para su "
+                f"consulta con el Dr. {doctor.apellidoPaterno}. Preséntese en recepción."
+            )
+
+    # ==========================
+    # Mensajes en QUECHUA
+    # (puedes afinar estos textos con un traductor humano)
+    # ==========================
+    if lang == "qu":
+        if tipo == 'recordatorio':
+            return (
+                f"Rimaykullayki {paciente.nombre}, hampikuykita "
+                f"Dr. {doctor.apellidoPaterno} ({especialidad.nombre}) "
+                f"wan {fecha_str} {hora_str}-ta yuyarinaykuy."
+            )
+        
+        elif tipo == 'instrucciones':
+            return (
+                f"Hampikuykita {fecha_str} {hora_str}-ta kanki "
+                f"Dr. {doctor.apellidoPaterno} wan. "
+                f"10 minutos ñawpaqta hamuy. Tipo: {cita.tipo_cita}."
+            )
+        
+        elif tipo == 'llamado':
+            return (
+                f"{paciente.nombre}, kunan hamuy hampikuykipaq "
+                f"Dr. {doctor.apellidoPaterno} wan. "
+                f"Recepciónman rinaykuy."
+            )
+
+    # Fallback genérico
+    return f"Recordatorio de cita para {paciente.nombre}"
+
+
+# ============================================================
+# Reintento de SMS fallidos
+# ============================================================
 
 def reintentar_sms_fallido(sms_notification: SMSNotification, max_intentos: int = 3) -> bool:
     """
@@ -219,6 +280,16 @@ def reintentar_sms_fallido(sms_notification: SMSNotification, max_intentos: int 
         )
         return False
     
+    # Respetar nuevamente el consentimiento por si cambió
+    paciente = sms_notification.paciente
+    notif_pref = getattr(paciente, "notif_pref", None)
+    if not notif_pref or not notif_pref.sms_consent:
+        logger.info(
+            f"Paciente {paciente.nombre_completo()} retiró su consentimiento SMS; "
+            f"no se reintenta envío."
+        )
+        return False
+
     client = obtener_cliente_twilio()
     if not client:
         return False
@@ -251,6 +322,10 @@ def reintentar_sms_fallido(sms_notification: SMSNotification, max_intentos: int 
         logger.error(f"Error al reintentar SMS #{sms_notification.id}: {e}")
         return False
 
+
+# ============================================================
+# Consulta de estado en Twilio
+# ============================================================
 
 def obtener_estado_entrega_sms(sid: str) -> str:
     """

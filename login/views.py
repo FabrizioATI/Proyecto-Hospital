@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from database.models import Entidad, Rol, RolEntidad
+from database.models import Entidad, Rol, RolEntidad, NotificationPreference  
 
 
 #Index
@@ -101,3 +101,59 @@ def register(request):
         "accounts/register.html",
         {"errors": errors, "form_data": request.POST},
     )
+    
+def editar_perfil(request):
+    if "entidad_id" not in request.session:
+        messages.warning(request, "Debes iniciar sesión.")
+        return redirect("login")
+
+    entidad = Entidad.objects.get(id=request.session["entidad_id"])
+    rol = RolEntidad.objects.filter(entidad=entidad).first()
+
+    if not rol or rol.rol.codigo_rol != "002":
+        messages.error(request, "No tienes permisos para editar este perfil.")
+        return redirect("index")
+
+    notif_pref, _ = NotificationPreference.objects.get_or_create(user=entidad)
+
+    errors = {}
+
+    if request.method == "POST":
+        nombre = request.POST.get("nombre")
+        apellidoPaterno = request.POST.get("apellidoPaterno")
+        apellidoMaterno = request.POST.get("apellidoMaterno")
+        telefono = request.POST.get("telefono")
+        correo = request.POST.get("correo")
+
+        sms_consent = "sms_consent" in request.POST
+        sms_language = request.POST.get("sms_language", notif_pref.sms_language)
+
+        if Entidad.objects.filter(correo=correo).exclude(id=entidad.id).exists():
+            errors["correo"] = "Este correo ya está registrado por otro usuario."
+
+        if not errors:
+            entidad.nombre = nombre
+            entidad.apellidoPaterno = apellidoPaterno
+            entidad.apellidoMaterno = apellidoMaterno
+            entidad.telefono = telefono
+            entidad.correo = correo
+            entidad.save()
+
+            notif_pref.sms_consent = sms_consent
+            notif_pref.sms_language = sms_language
+            notif_pref.save()
+
+            request.session["entidad_nombre"] = (
+                f"{entidad.nombre} {entidad.apellidoPaterno} {entidad.apellidoMaterno}"
+            )
+
+            messages.success(request, "Tu perfil fue actualizado correctamente.")
+
+            # ⬇ REDIRECCIÓN A LA LISTA DE CLIENTES
+            return redirect("lista_citas_paciente", entidad.id)
+
+    return render(request, "accounts/editar_perfil.html", {
+        "entidad": entidad,
+        "errors": errors,
+        "notif_pref": notif_pref
+    })
