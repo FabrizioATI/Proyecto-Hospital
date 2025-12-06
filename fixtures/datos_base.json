@@ -177,6 +177,16 @@
       "nombre": "Cardiologia"
     }
   },
+  
+  {
+    "model": "database.especialidad",
+    "pk": 2,
+    "fields": {
+      "nombre": "Odontología",
+      "capacidad_por_hora": 10,
+      "requiere_derivacion": true
+    }
+  },
   {
     "model": "database.doctordetalle",
     "pk": 1,

@@ -72,6 +72,18 @@
                 {% endif %}
               {% endfor %}
             </div>
+
+            <!-- ======================================================
+                 RF20 - MENSAJE DE ESPECIALIDAD QUE REQUIERE DERIVACIÓN
+               ====================================================== -->
+            {% if requiere_derivacion %}
+              <div class="alert alert-danger mt-3">
+                ⚠ La especialidad <strong>{{ especialidad_bloqueada }}</strong> requiere una derivación médica previa.
+                No puedes agendar hasta que se registre una.
+              </div>
+            {% endif %}
+            <!-- ====================================================== -->
+
           {% else %}
             <div class="alert alert-warning">
               Selecciona una especialidad y un doctor antes de registrar la cita.
@@ -105,14 +117,12 @@
               <label>Clasificación</label>
 
               {% if es_admin %}
-                <!-- Admin: puede elegir todas -->
                 <select name="clasificacion" class="form-control" required>
                   <option value="EMERGENCIA"   {% if request.POST.clasificacion == 'EMERGENCIA' %}selected{% endif %}>Emergencia</option>
                   <option value="ADULTO_MAYOR" {% if request.POST.clasificacion == 'ADULTO_MAYOR' %}selected{% endif %}>Adulto mayor</option>
                   <option value="REGULAR"      {% if request.POST.clasificacion|default:'REGULAR' == 'REGULAR' %}selected{% endif %}>Regular</option>
                 </select>
               {% else %}
-                <!-- Otros roles: solo Adulto Mayor y Regular -->
                 <select name="clasificacion" class="form-control" required>
                   <option value="ADULTO_MAYOR" {% if request.POST.clasificacion == 'ADULTO_MAYOR' %}selected{% endif %}>Adulto mayor</option>
                   <option value="REGULAR"      {% if request.POST.clasificacion|default:'REGULAR' == 'REGULAR' %}selected{% endif %}>Regular</option>
@@ -140,26 +150,25 @@
             </div>
 
             <!-- Botones -->
-              {% if capacidad_agotada %}
-                <div class="alert alert-warning">
-                  Los cupos del doctor seleccionado están agotados.
-                  {% if capacidad_diaria_agotada %}<br>Capacidad diaria alcanzada ({{ citas_dia }} / {{ cupos_diarios }}).{% endif %}
-                  {% if capacidad_semanal_agotada %}<br>Capacidad semanal alcanzada ({{ citas_semana }} / {{ cupos_semanales }}).{% endif %}
-                </div>
+            {% if capacidad_agotada %}
+              <div class="alert alert-warning">
+                Los cupos del doctor seleccionado están agotados.
+                {% if capacidad_diaria_agotada %}<br>Capacidad diaria alcanzada ({{ citas_dia }} / {{ cupos_diarios }}).{% endif %}
+                {% if capacidad_semanal_agotada %}<br>Capacidad semanal alcanzada ({{ citas_semana }} / {{ cupos_semanales }}).{% endif %}
+              </div>
 
-                <!-- Opciones: aceptar lista de espera o elegir otro doctor -->
-                <button type="submit" name="aceptar_waitlist" value="1" class="btn btn-primary">
-                  Aceptar y poner en lista de espera
-                </button>
+              <button type="submit" name="aceptar_waitlist" value="1" class="btn btn-primary">
+                Aceptar y poner en lista de espera
+              </button>
 
-                <a href="?especialidad={{ selected_esp }}{% if es_admin and selected_paciente_id %}&paciente_sel={{ selected_paciente_id }}{% endif %}" class="btn btn-secondary">
-                  Elegir otro doctor
-                </a>
-              {% else %}
-                <button type="submit" class="btn btn-primary" {% if not selected_doc %}disabled{% endif %}>
-                  Registrar Cita
-                </button>
-              {% endif %}
+              <a href="?especialidad={{ selected_esp }}{% if es_admin and selected_paciente_id %}&paciente_sel={{ selected_paciente_id }}{% endif %}" class="btn btn-secondary">
+                Elegir otro doctor
+              </a>
+            {% else %}
+              <button type="submit" class="btn btn-primary" {% if not selected_doc %}disabled{% endif %}>
+                Registrar Cita
+              </button>
+            {% endif %}
             <a href="{% url 'lista_citas_paciente' request.session.entidad_id %}" class="btn btn-secondary">
               Cancelar
             </a>

@@ -52,6 +52,9 @@ class Especialidad(models.Model):
     # Capacidad máxima de cupos por hora para esta especialidad (ej: 10)
     capacidad_por_hora = models.PositiveIntegerField(default=10)
 
+    # NUEVO CAMPO — si esta especialidad exige derivación médica previa
+    requiere_derivacion = models.BooleanField(default=False)
+
     def __str__(self):
         return self.nombre
 
@@ -67,6 +70,30 @@ class DoctorDetalle(models.Model):
     def __str__(self):
         return f"Dr. {self.entidad.nombre} ({self.especialidad.nombre})"
 
+
+class Derivacion(models.Model):
+    paciente = models.ForeignKey(
+        Entidad,
+        on_delete=models.CASCADE,
+        related_name="derivaciones"
+    )
+    especialidad = models.ForeignKey(
+        Especialidad,
+        on_delete=models.CASCADE,
+        related_name="derivaciones"
+    )
+
+    # Fecha en que se generó la derivación
+    fecha_emision = models.DateField(auto_now_add=True)
+
+    # Opcional: fecha de expiración (ej: derivación válida por 6 meses)
+    fecha_expiracion = models.DateField(null=True, blank=True)
+
+    # Marca de si la derivación está activa/usable
+    valido = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Derivación de {self.paciente.nombre_completo()} para {self.especialidad.nombre}"
 
 # ============================================================
 # HORARIOS DE DOCTOR

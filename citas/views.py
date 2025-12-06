@@ -12,7 +12,7 @@ from django.contrib import messages
 from .services import solicitar_cita, get_doctores_con_horario
 from database.models import (
     Entidad, Especialidad, DoctorDetalle,
-    DoctorHorario, Cita, WaitlistItem, HistoriaClinica, EpisodioClinico
+    DoctorHorario, Cita, WaitlistItem, HistoriaClinica, EpisodioClinico, Derivacion
 )
 from django.db.models import Q
 from django.db.models import Count, Max
@@ -227,6 +227,7 @@ def registrar_cita_paciente(request, paciente_id):
 
     # --- Rol ---
     es_admin = request.session.get("codigo_rol") == "003"
+
     # --- GET: filtros/combos ---
     especialidades = Especialidad.objects.all()
     especialidad_id = request.GET.get("especialidad")
@@ -300,8 +301,43 @@ def registrar_cita_paciente(request, paciente_id):
         # doctor_id es DoctorDetalle.id
         doctor_detalle = get_object_or_404(DoctorDetalle, id=doctor_id)
 
-        # Límite: 2 citas activas por especialidad
+        # Obtener la especialidad
         especialidad = doctor_detalle.especialidad
+
+        # ============================================================
+        # 🔥 RF20: Validación de derivación si la especialidad la exige
+        # ============================================================
+        if especialidad.requiere_derivacion:
+            tiene_derivacion = Derivacion.objects.filter(
+                paciente=paciente_obj,
+                especialidad=especialidad,
+                valido=True
+            ).exists()
+
+            if not tiene_derivacion:
+                messages.error(
+                    request,
+                    f"La especialidad {especialidad.nombre} requiere una derivación médica previa."
+                )
+
+                return render(request, "citas/registrar_cita.html", {
+                    "especialidades": especialidades,
+                    "paciente": paciente_url,
+                    "doctores": doctores,
+                    "errors": errors,
+                    "selected_esp": int(especialidad_id) if especialidad_id else None,
+                    "selected_doc": int(selected_doc) if selected_doc else None,
+                    "pacientes": pacientes_list,
+                    "es_admin": es_admin,
+                    "selected_paciente_id": paciente_sel,
+
+                    # Nuevo: bandera para UI
+                    "requiere_derivacion": True,
+                    "especialidad_bloqueada": especialidad.nombre,
+                })
+        # ============================================================
+
+        # Límite: 2 citas activas por especialidad
         citas_activas = Cita.objects.filter(
             paciente=paciente_obj,
             doctor_horario__doctor__especialidad=especialidad,
@@ -311,9 +347,7 @@ def registrar_cita_paciente(request, paciente_id):
             messages.error(request, "Límite de citas activas alcanzado para esta especialidad")
             return redirect("lista_citas_paciente", paciente_id=paciente_obj.id)
 
-        
-            # --- Verificar cupos diarios / semanales del doctor ---
-        # Obtener capacidades configuradas en DoctorDetalle (opcional)
+        # --- Verificar cupos diarios / semanales del doctor ---
         cupos_diarios = doctor_detalle.cupos_diarios
         cupos_semanales = doctor_detalle.cupos_semanales
 
@@ -321,7 +355,6 @@ def registrar_cita_paciente(request, paciente_id):
         inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes
         fin_semana = inicio_semana + timedelta(days=6)
 
-        # Contar citas EN_ESPERA asignadas al doctor para día y semana
         citas_dia = Cita.objects.filter(
             doctor_horario__doctor=doctor_detalle,
             doctor_horario__horario__fecha=hoy,
@@ -339,10 +372,8 @@ def registrar_cita_paciente(request, paciente_id):
         capacidad_semanal_agotada = (cupos_semanales is not None and citas_semana >= cupos_semanales)
 
         if capacidad_diaria_agotada or capacidad_semanal_agotada:
-            # Si el usuario POSTEA y ha indicado aceptar lista de espera, continuamos
             aceptar_wait = request.POST.get("aceptar_waitlist")
             if not aceptar_wait:
-                # Renderizamos la página con la opción de aceptar lista de espera o elegir otro doctor
                 messages.warning(request, "Los cupos del doctor están agotados para la fecha/semana seleccionada.")
                 return render(request, "citas/registrar_cita.html", {
                     "especialidades": especialidades,
@@ -363,7 +394,7 @@ def registrar_cita_paciente(request, paciente_id):
                     "cupos_semanales": cupos_semanales,
                 })
 
-        # Registrar solicitud (waitlist / motor)
+        # Registrar solicitud
         solicitar_cita(
             paciente=paciente_obj,
             doctor_detalle=doctor_detalle,
@@ -391,6 +422,7 @@ def registrar_cita_paciente(request, paciente_id):
         "es_admin": es_admin,
         "selected_paciente_id": selected_paciente_id,
     })
+
 
 def marcar_cita_atendida(request, cita_id):
     cita = get_object_or_404(Cita, pk=cita_id)
