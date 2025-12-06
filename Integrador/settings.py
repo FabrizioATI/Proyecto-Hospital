@@ -179,3 +179,9 @@ TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', 'NUMERO AQUI')
 # TWILIO_ACCOUNT_SID = 'test_account_sid'
 # TWILIO_AUTH_TOKEN = 'test_auth_token'
 # TWILIO_PHONE_NUMBER = '+1234567890'
+# ============================================================
+# CRON – RF10 Recordatorios escalonados
+# ============================================================
+CRONJOBS = [
+    ('*/10 * * * *', 'citas.tasks.procesar_recordatorios'),
+]

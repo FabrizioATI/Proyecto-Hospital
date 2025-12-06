@@ -136,6 +136,7 @@ class Cita(models.Model):
         ('ATENDIDA', 'Atendida'),
         ('CANCELADA', 'Cancelada'),
         ('NO_SHOW', 'No asistió'),
+        ('confirmada', 'Confirmada'),
     ]
     
     TIPO_CITA = [
@@ -175,6 +176,9 @@ class Cita(models.Model):
     ehr_id = models.CharField(max_length=50, blank=True, null=True)
 
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    recordatorio_48h_enviado = models.BooleanField(default=False)
+    recordatorio_2h_enviado = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         self.prioridad = {
