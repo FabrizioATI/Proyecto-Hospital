@@ -1,0 +1,269 @@
+{% extends "layouts/base.html" %}
+{% block title %} Reportes {% endblock title %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+  <!-- Título y descripción -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <h2 class="mb-1">Reportes</h2>
+      <p class="text-muted mb-0">
+        Descarga en formato Excel la información clave del sistema: roles, especialidades y citas.
+      </p>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <!-- Card Roles -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-primary text-white rounded-circle me-3">
+              <i class="ni ni-single-02"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Roles</h5>
+              <small class="text-muted">Perfiles de usuario del sistema</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Exporta el listado de roles configurados en la plataforma para auditorías o revisión
+            de permisos.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">
+              Formato: <strong>.xlsx</strong>
+            </span>
+            <a href="{% url 'export_roles_excel' %}" class="btn btn-sm btn-primary">
+              <i class="ni ni-cloud-download-95 me-1"></i> Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Especialidades -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-info text-white rounded-circle me-3">
+              <i class="ni ni-ambulance"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Especialidades</h5>
+              <small class="text-muted">Oferta médica disponible</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Descarga el catálogo de especialidades, incluyendo capacidad por hora y si requieren
+            derivación médica.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">
+              Formato: <strong>.xlsx</strong>
+            </span>
+            <a href="{% url 'export_especialidades_excel' %}" class="btn btn-sm btn-info text-white">
+              <i class="ni ni-cloud-download-95 me-1"></i> Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Citas -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-danger text-white rounded-circle me-3">
+              <i class="ni ni-calendar-grid-58"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Citas</h5>
+              <small class="text-muted">Gestión de agenda y atenciones</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Exporta el detalle de las citas registradas: paciente, doctor, especialidad, fechas,
+            clasificación, estado y más.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">
+              Formato: <strong>.xlsx</strong>
+            </span>
+            <a href="{% url 'export_citas_excel' %}" class="btn btn-sm btn-danger">
+              <i class="ni ni-cloud-download-95 me-1"></i> Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+ <!-- Row 2: reportes analíticos -->
+  <div class="row mt-3">
+
+    <!-- Citas por estado -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-secondary text-white rounded-circle me-3">
+              <i class="ni ni-align-left-2"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Citas por estado</h5>
+              <small class="text-muted">Distribución de estados</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Resumen de cuántas citas están en cada estado: en espera, atendidas, canceladas,
+            no-show, etc.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">.xlsx</span>
+            <a href="{% url 'export_citas_por_estado_excel' %}" class="btn btn-sm btn-outline-secondary">
+              Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Citas por especialidad y tipo -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-success text-white rounded-circle me-3">
+              <i class="ni ni-badge"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Citas por especialidad</h5>
+              <small class="text-muted">Virtual vs presencial</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Análisis de volumen de citas por especialidad y tipo de atención
+            (virtual o presencial).
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">.xlsx</span>
+            <a href="{% url 'export_citas_por_especialidad_excel' %}" class="btn btn-sm btn-outline-success">
+              Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No-show por doctor -->
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-danger text-white rounded-circle me-3">
+              <i class="ni ni-support-16"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">No-show por doctor</h5>
+              <small class="text-muted">Pacientes que no asisten</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Ranking de médicos con mayor número de pacientes que no se presentan a su cita.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">.xlsx</span>
+            <a href="{% url 'export_noshow_por_doctor_excel' %}" class="btn btn-sm btn-outline-danger">
+              Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 3: más analíticos -->
+  <div class="row mt-1">
+
+    <!-- Cancelaciones por paciente -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-warning text-white rounded-circle me-3">
+              <i class="ni ni-circle-08"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Cancelaciones por paciente</h5>
+              <small class="text-muted">Pacientes que más cancelan</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Identifica a los pacientes con mayor número de citas canceladas para análisis
+            de comportamiento o políticas internas.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">.xlsx</span>
+            <a href="{% url 'export_cancelaciones_por_paciente_excel' %}" class="btn btn-sm btn-outline-warning">
+              Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen de lista de espera -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <div class="icon icon-shape bg-gradient-info text-white rounded-circle me-3">
+              <i class="ni ni-time-alarm"></i>
+            </div>
+            <div>
+              <h5 class="card-title mb-0">Resumen lista de espera</h5>
+              <small class="text-muted">Pendientes, aceptados, expirados</small>
+            </div>
+          </div>
+
+          <p class="text-muted flex-grow-1">
+            Panorama general del uso de la lista de espera: cuántos pacientes siguen pendientes,
+            fueron notificados, aceptaron o dejaron expirar la oferta.
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="badge bg-light text-muted">.xlsx</span>
+            <a href="{% url 'export_waitlist_resumen_excel' %}" class="btn btn-sm btn-outline-info">
+              Descargar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  
+</div>
+{% endblock content %}

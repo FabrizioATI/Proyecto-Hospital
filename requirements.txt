@@ -5,3 +5,4 @@ tzdata==2025.2
 holidays
 secure-smtplib==0.1.1
 twilio>=8.0.0
+openpyxl>=3.1.2
