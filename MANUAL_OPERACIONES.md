@@ -91,17 +91,6 @@ TWILIO_AUTH_TOKEN = "tu_auth_token"
 TWILIO_PHONE_NUMBER = "+1234567890"
 ```
 
-### 4.2 Servicio de Correo Electrónico
-En `settings.py`:
-```python
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tu_email@gmail.com'
-EMAIL_HOST_PASSWORD = 'tu_contraseña_aplicacion'
-```
-
 ---
 
 ## 5. Estructura del Proyecto
