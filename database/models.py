@@ -361,6 +361,7 @@ class SMSNotification(models.Model):
         ('recordatorio', 'Recordatorio'),
         ('instrucciones', 'Instrucciones'),
         ('llamado', 'Llamado a ingreso'),
+        ('encuesta', 'Encuesta'),
     ]
 
     ESTADO_CHOICES = [

@@ -175,6 +175,9 @@ import os
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', 'TU_TOKEN_AQUI')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', 'NUMERO AQUI')
 
+# URL para encuestas de satisfacción (RF16). Cámbiala por tu Google Form o similar.
+SURVEY_URL = os.getenv('SURVEY_URL', 'https://forms.gle/jaA3eBTqEZKHLwtV6')
+
 # Opción B: Para testing sin Twilio real, descomenta estas líneas y comenta las de arriba:
 # TWILIO_ACCOUNT_SID = 'test_account_sid'
 # TWILIO_AUTH_TOKEN = 'test_auth_token'

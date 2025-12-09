@@ -2,6 +2,8 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from database.models import Cita
 from .sms_service import enviar_sms_recordatorio
+from database.models import SMSNotification
+from .sms_service import enviar_sms_from_notification
 
 
 def procesar_recordatorios():
@@ -35,3 +37,21 @@ def procesar_recordatorios():
             enviar_sms_recordatorio(cita, tipo="recordatorio")
             cita.recordatorio_2h_enviado = True
             cita.save()
+
+    # ------------------------------------------------
+    # RF16 — Procesar encuestas programadas (tipo='encuesta')
+    # ------------------------------------------------
+    encuestas = SMSNotification.objects.filter(
+        tipo='encuesta',
+        estado='pendiente',
+        fecha_envio__lte=ahora,
+    ).select_related('cita', 'paciente')
+
+    for encuesta in encuestas:
+        try:
+            enviar_sms_from_notification(encuesta)
+        except Exception:
+            # No queremos que un fallo crashee el cron; se registrará internamente
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Error enviando encuesta SMS id=%s", encuesta.id)

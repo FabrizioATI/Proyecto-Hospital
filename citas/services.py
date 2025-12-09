@@ -8,6 +8,10 @@ from database.models import (
     DoctorHorario,
 )
 from .sms_service import enviar_sms_recordatorio
+from database.models import SMSNotification
+from django.conf import settings
+from datetime import timedelta
+from .sms_service import construir_mensaje_encuesta
 
 PRIORIDAD_MAP = {
     'EMERGENCIA': 1,
@@ -200,6 +204,30 @@ def cancelar_y_ofertar(cita: Cita):
 def atender_y_asociar(cita):
     cita.estado = "ATENDIDA"
     cita.save()
+    # Programar envío de encuesta NPS/satisfacción 2 horas después si el paciente dio consentimiento
+    try:
+        paciente = cita.paciente
+        notif_pref = getattr(paciente, 'notif_pref', None)
+        if notif_pref and notif_pref.sms_consent:
+            fecha_envio = timezone.now() + timedelta(hours=2)
+            # construir mensaje (usa link de encuesta configurable en settings)
+            lang = notif_pref.sms_language or 'es'
+            mensaje = construir_mensaje_encuesta(cita, lang=lang)
+
+            SMSNotification.objects.create(
+                cita=cita,
+                paciente=paciente,
+                telefono=paciente.telefono or '',
+                tipo='encuesta',
+                mensaje=mensaje,
+                estado='pendiente',
+                fecha_envio=fecha_envio,
+            )
+    except Exception:
+        # No queremos bloquear el flujo por errores en la programación
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error programando encuesta para cita #%s", getattr(cita, 'id', '?'))
 
 @transaction.atomic
 def liberar_horario(doctor_horario: DoctorHorario):

@@ -323,6 +323,85 @@ def reintentar_sms_fallido(sms_notification: SMSNotification, max_intentos: int 
         return False
 
 
+def construir_mensaje_encuesta(cita: Cita, lang: str = "es") -> str:
+    """
+    Construye un mensaje breve con el enlace a la encuesta de satisfacción (NPS).
+    Usa la configuración `SURVEY_URL` en `settings.py`.
+    """
+    from django.conf import settings
+
+    paciente = cita.paciente
+    survey_url = getattr(settings, 'SURVEY_URL', 'https://forms.gle/XXXXXXXX')
+
+    if lang == 'es':
+        return f"Gracias por asistir a su cita, {paciente.nombre}. Por favor califique su experiencia: {survey_url}"
+    if lang == 'qu':
+        return f"Yuspagaraqmi tapuykita, {paciente.nombre}. Rikuykuy qampi: {survey_url}"
+
+    return f"Por favor complete la encuesta: {survey_url}"
+
+
+def enviar_sms_from_notification(sms_notification: SMSNotification) -> bool:
+    """
+    Envía un SMS usando los datos ya preparados en un registro `SMSNotification`.
+    Actualiza el registro con SID/estado/respuesta.
+    """
+    # Validar consentimiento actualizado
+    paciente = sms_notification.paciente
+    notif_pref = getattr(paciente, 'notif_pref', None)
+    if not notif_pref or not notif_pref.sms_consent:
+        logger.info(f"Paciente {paciente.nombre_completo()} no tiene consentimiento; no se envía encuesta.")
+        sms_notification.estado = 'fallido'
+        sms_notification.respuesta_twilio = json.dumps({'error': 'no_consent'})
+        sms_notification.save()
+        return False
+
+    client = obtener_cliente_twilio()
+    if not client:
+        logger.error("No se pudo obtener cliente Twilio para enviar encuesta")
+        return False
+
+    twilio_number = getattr(settings, 'TWILIO_PHONE_NUMBER', None)
+    if not twilio_number:
+        logger.error("TWILIO_PHONE_NUMBER no configurado en settings")
+        return False
+
+    try:
+        message = client.messages.create(
+            body=sms_notification.mensaje,
+            from_=twilio_number,
+            to=sms_notification.telefono,
+        )
+
+        sms_notification.sid = message.sid
+        sms_notification.fecha_envio = timezone.now()
+        sms_notification.respuesta_twilio = json.dumps({
+            'sid': message.sid,
+            'status': message.status,
+            'error_code': message.error_code,
+        })
+
+        if message.status in ['queued', 'sending', 'sent']:
+            sms_notification.estado = 'enviado'
+        elif message.status == 'delivered':
+            sms_notification.estado = 'entregado'
+            sms_notification.fecha_entrega = timezone.now()
+        else:
+            sms_notification.estado = 'fallido'
+
+        sms_notification.save()
+        logger.info(f"Encuesta SMS enviada (SMS #{sms_notification.id}) a {paciente.nombre_completo()}")
+        return True
+
+    except Exception as e:
+        sms_notification.estado = 'fallido'
+        sms_notification.fecha_envio = timezone.now()
+        sms_notification.respuesta_twilio = json.dumps({'error': str(e), 'type': type(e).__name__})
+        sms_notification.save()
+        logger.error(f"Error al enviar encuesta SMS #{sms_notification.id}: {e}")
+        return False
+
+
 # ============================================================
 # Consulta de estado en Twilio
 # ============================================================
