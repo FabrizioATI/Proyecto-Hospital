@@ -83,14 +83,19 @@ SECRET_KEY = '...'              # Usar variable de entorno en producción
 ## 4. Configuración de Servicios Externos
 
 ### 4.1 Servicio de SMS (Twilio)
-En `citas/sms_service.py`:
+En `Integrador/settings.py`:
 ```python
 # Configurar credenciales de Twilio
 TWILIO_ACCOUNT_SID = "tu_account_sid"
 TWILIO_AUTH_TOKEN = "tu_auth_token"
 TWILIO_PHONE_NUMBER = "+1234567890"
 ```
-
+### 4.2 Encuestas de satisfacción
+En `Integrador/settings.py`:
+```python
+# Configurar credenciales de Twilio
+SURVEY_URL = os.getenv('SURVEY_URL', 'Enlace de encuestas')
+```
 ---
 
 ## 5. Estructura del Proyecto
