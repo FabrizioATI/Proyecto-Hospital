@@ -1,0 +1,59 @@
+{% extends "layouts/base.html" %}
+{% block title %} Auditoría de Citas {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Auditoría de Reprogramaciones</h2>
+
+  <div class="card shadow-sm">
+      <div class="table-responsive">
+          <table class="table table-hover align-items-center">
+            <thead style="background-color: #0a1a33; color: white;">
+              <tr>
+                <th>Fecha/Hora</th>
+                <th>Usuario</th>
+                <th>Cita</th>
+                <th>Especialidad</th>
+                <th>Motivo</th>
+                <th>Antes</th>
+                <th>Después</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in auditorias %}
+              <tr>
+                <td>{{ a.fecha_evento|date:"d/m/Y H:i" }}</td>
+                <td>{{ a.usuario.nombre }} {{ a.usuario.apellidoPaterno }} {{ a.usuario.apellidoMaterno }}</td>
+                <td>#{{ a.cita.id }}</td>
+                <td>{{ a.cita.doctor_horario.doctor.especialidad.nombre }}</td>
+                <td>{{ a.motivo }}</td>
+
+                <!-- FORMATEAMOS ANTES -->
+                <td>
+                  <ul class="mb-0">
+                    <li><strong>Motivo:</strong> {{ a.valor_anterior.motivo }}</li>
+                    <li><strong>Tipo:</strong> {{ a.valor_anterior.tipo_cita }}</li>
+                    <li><strong>Fecha:</strong> {{ a.valor_anterior.fecha }}</li>
+                    <li><strong>Hora:</strong> {{ a.valor_anterior.hora }}</li>
+                  </ul>
+                </td>
+
+                <!-- FORMATEAMOS DESPUÉS -->
+                <td>
+                  <ul class="mb-0">
+                    <li><strong>Motivo:</strong> {{ a.valor_nuevo.motivo }}</li>
+                    <li><strong>Tipo:</strong> {{ a.valor_nuevo.tipo_cita }}</li>
+                    <li><strong>Fecha:</strong> {{ a.valor_nuevo.fecha }}</li>
+                    <li><strong>Hora:</strong> {{ a.valor_nuevo.hora }}</li>
+                  </ul>
+                </td>
+
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+      </div>
+  </div>
+
+</div>
+{% endblock %}

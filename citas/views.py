@@ -93,13 +93,48 @@ def editar_cita_paciente(request, paciente_id, pk):
         if tipo_cita not in ["PRESENCIAL", "VIRTUAL"]:
             errors["tipo_cita"] = "Debe seleccionar una modalidad válida."
 
+
+#------------------CAMBIO DE POST-------------------------------
         if not errors:
+            # --- CAPTURAR ESTADO ANTERIOR ---
+            before = {
+                "motivo": cita.motivo,
+                "tipo_cita": cita.tipo_cita,
+                "fecha": str(cita.doctor_horario.horario.fecha),
+                "hora": str(cita.doctor_horario.horario.hora_inicio),
+            }
+
+            # --- APLICAR CAMBIOS ---
             cita.motivo = motivo
             cita.tipo_cita = tipo_cita
             cita.save()
+
+            # --- CAPTURAR ESTADO NUEVO ---
+            after = {
+                "motivo": cita.motivo,
+                "tipo_cita": cita.tipo_cita,
+                "fecha": str(cita.doctor_horario.horario.fecha),
+                "hora": str(cita.doctor_horario.horario.hora_inicio),
+            }
+
+            # --- REGISTRAR AUDITORÍA ---
+            from database.models import AuditoriaCita, Entidad
+
+            usuario_id = request.session.get("entidad_id")
+            usuario = Entidad.objects.filter(id=usuario_id).first()
+
+            AuditoriaCita.objects.create(
+                cita=cita,
+                usuario=usuario,
+                motivo=motivo,
+                valor_anterior=before,
+                valor_nuevo=after,
+                accion="REPROGRAMACIÓN",
+            )
+
             messages.success(request, "La cita se actualizó correctamente.")
-            # Redirige a la lista del paciente dueño de la cita (sirve para admin y paciente)
             return redirect("lista_citas_paciente", paciente_id=cita.paciente_id)
+
 
     return render(request, "citas/editar_cita.html", {
         "cita": cita,
@@ -308,7 +343,7 @@ def registrar_cita_paciente(request, paciente_id):
         especialidad = doctor_detalle.especialidad
 
         # ============================================================
-        # 🔥 RF20: Validación de derivación si la especialidad la exige
+        # RF20: Validación de derivación si la especialidad la exige
         # ============================================================
         if especialidad.requiere_derivacion:
             tiene_derivacion = Derivacion.objects.filter(
@@ -594,3 +629,21 @@ def exportar_agenda_hoy(request):
     )
 
     return response
+
+
+def auditoria_citas(request):
+    if request.session.get("codigo_rol") not in ["003"]:  # Solo admin
+        return HttpResponseForbidden("No autorizado")
+
+    from database.models import AuditoriaCita
+
+    auditorias = (
+        AuditoriaCita.objects
+        .select_related("cita", "usuario")
+        .order_by("-fecha_evento")
+    )
+
+    return render(request, "citas/auditoria_citas.html", {
+        "auditorias": auditorias
+    })
+

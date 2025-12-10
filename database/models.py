@@ -436,3 +436,23 @@ class NotificationPreference(models.Model):
 
     def __str__(self):
         return f"{self.user.dni} | consent={self.sms_consent} | lang={self.sms_language}"
+    
+    
+class AuditoriaCita(models.Model):
+    accion = models.CharField(max_length=50, default="REPROGRAMACIÓN")
+
+    cita = models.ForeignKey(Cita, on_delete=models.CASCADE, related_name="auditorias")
+    usuario = models.ForeignKey(Entidad, on_delete=models.SET_NULL, null=True, blank=True)
+
+    motivo = models.TextField(blank=True, null=True)
+
+    valor_anterior = models.JSONField(null=True, blank=True)
+    valor_nuevo = models.JSONField(null=True, blank=True)
+
+    fecha_evento = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-fecha_evento"]
+
+    def __str__(self):
+        return f"Auditoría Cita #{self.cita_id} por {self.usuario}"
