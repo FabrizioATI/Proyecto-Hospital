@@ -12,5 +12,6 @@ urlpatterns = [
     path('checkin/<int:cita_id>/', views.checkin_view, name='checkin'),
     path("ehr/historias/", views.lista_historias_clinicas, name="lista_historias_clinicas"),
     path("ehr/historias/<int:historia_id>/", views.detalle_historia_clinica, name="detalle_historia_clinica"),
-    path('index/', views.index, name='index')
+    path('index/', views.index, name='index'),
+    path("exportar-agenda-hoy/", views.exportar_agenda_hoy, name="exportar_agenda_hoy")
 ]

@@ -9,12 +9,24 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <h3 class="mb-0">Lista de Citas</h3>
 
-          {# Mostrar botón solo si el usuario es paciente #}
-          {% if tipo_usuario != 'doctor' %}
-          <a href="{% url 'registrar_cita_paciente' request.session.entidad_id %}" class="btn btn-primary btn-sm">
-            Agregar Cita
-          </a>
-          {% endif %}
+          <div class="d-flex gap-2">
+
+            {# 🔥 RF17: BOTÓN EXPORTAR CSV SOLO ADMIN (ROL 003) #}
+            {% if request.session.codigo_rol == "003" %}
+              <a href="{% url 'exportar_agenda_hoy' %}" class="btn btn-success btn-sm">
+                📄 Exportar Agenda Hoy (CSV)
+              </a>
+            {% endif %}
+
+            {# Botón Agregar Cita (solo pacientes y admin) #}
+            {% if tipo_usuario != 'doctor' %}
+              <a href="{% url 'registrar_cita_paciente' request.session.entidad_id %}" 
+                 class="btn btn-primary btn-sm">
+                Agregar Cita
+              </a>
+            {% endif %}
+
+          </div>
         </div>
 
         <div class="card-body">
@@ -81,19 +93,24 @@
                   {# Acciones para Paciente/Admin (lo que ya tenías) #}
                   {% if tipo_usuario != 'doctor' %}
                     <td class="text-end">
-                      <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" class="btn btn-sm btn-primary">Editar</a>
+                      <a href="{% url 'editar_cita_paciente' request.session.entidad_id c.id %}" 
+                         class="btn btn-sm btn-primary">Editar</a>
+
                       {% if c.estado == 'EN_ESPERA' %}
-                        <a href="{% url 'checkin' c.id %}" class="btn btn-sm btn-primary">Hacer check-in</a>
+                        <a href="{% url 'checkin' c.id %}" 
+                           class="btn btn-sm btn-primary">Hacer check-in</a>
                       {% endif %}
+
                       {% if c.estado != 'CANCELADA' %}
-                        <a href="{% url 'cancelar_cita' c.id %}" class="btn btn-sm btn-danger">Cancelar</a>
+                        <a href="{% url 'cancelar_cita' c.id %}" 
+                           class="btn btn-sm btn-danger">Cancelar</a>
                       {% endif %}
                     </td>
                   {% endif %}
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="{% if tipo_usuario == 'doctor' %}10{% else %}10{% endif %}" class="text-center text-muted">
+                  <td colspan="10" class="text-center text-muted">
                     No hay citas registradas
                   </td>
                 </tr>

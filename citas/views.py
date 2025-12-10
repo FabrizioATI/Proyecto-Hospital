@@ -19,6 +19,9 @@ from django.db.models import Count, Max
 from functools import wraps
 from django.utils import timezone
 from datetime import timedelta
+from django.http import HttpResponse
+import csv
+import logging
 
 #Index
 def index(request):
@@ -528,3 +531,66 @@ def detalle_historia_clinica(request, historia_id):
         "historia": historia,
         "episodios": episodios,
     })
+
+# ============================================================
+# RF17 – EXPORTAR AGENDA DE HOY (CSV)
+# ============================================================
+
+logger = logging.getLogger(__name__)
+
+def exportar_agenda_hoy(request):
+    """
+    Exporta la agenda del día en formato CSV.
+    Solo puede usarlo el administrador (código de rol: 003).
+    """
+    if request.session.get("codigo_rol") != "003":  # Solo admin
+        return HttpResponse("No autorizado", status=403)
+
+    hoy = timezone.localdate()
+
+    citas = (
+        Cita.objects
+        .filter(doctor_horario__horario__fecha=hoy)
+        .select_related("paciente", "doctor_horario__doctor__especialidad", "doctor_horario__horario")
+        .order_by("doctor_horario__horario__hora_inicio")
+    )
+
+    # Preparar respuesta CSV
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="agenda_{hoy}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "ID Cita",
+        "Paciente",
+        "DNI",
+        "Doctor",
+        "Especialidad",
+        "Fecha",
+        "Hora",
+        "Clasificación",
+        "Estado",
+        "Tipo de Cita",
+    ])
+
+    for cita in citas:
+        horario = cita.doctor_horario.horario
+        writer.writerow([
+            cita.id,
+            cita.paciente.nombre_completo(),
+            cita.paciente.dni,
+            cita.doctor_horario.doctor.entidad.nombre_completo(),
+            cita.doctor_horario.doctor.especialidad.nombre if cita.doctor_horario.doctor.especialidad else "",
+            horario.fecha,
+            horario.hora_inicio.strftime("%H:%M"),
+            cita.clasificacion,
+            cita.estado,
+            cita.tipo_cita,
+        ])
+
+    # Auditoría
+    logger.info(
+        f"[AUDITORÍA] El admin {request.session.get('entidad_id')} exportó la agenda del día {hoy}. Total: {citas.count()} registros."
+    )
+
+    return response
