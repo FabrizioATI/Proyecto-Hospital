@@ -11,24 +11,33 @@
 
 ## 📑 Tabla de Contenidos
 
-1. [El Inicio del Viaje del Paciente](#el-inicio-del-viaje-del-paciente)
-2. [Primera Vez: Registro](#primera-vez-registro)
-3. [Agendar una Cita](#agendar-una-cita)
-4. [Esperar la Confirmación](#esperar-la-confirmación)
-5. [El Día de la Cita](#el-día-de-la-cita)
-6. [Llegada al Hospital](#llegada-al-hospital)
-7. [En la Sala de Espera](#en-la-sala-de-espera)
-8. [El Consultorio](#el-consultorio)
-9. [Después de la Cita](#después-de-la-cita)
-10. [Flujos Presenciales Especiales](#flujos-presenciales-especiales)
-11. [Notificaciones Especiales](#notificaciones-especiales)
-12. [Protocolo de Emergencias](#protocolo-de-emergencias)
-13. [Situaciones Especiales en Recepción](#situaciones-especiales-en-recepción)
-14. [Casos de Uso Específicos](#casos-de-uso-específicos)
+1. [El Inicio del Viaje del Paciente](#-el-inicio-del-viaje-del-paciente)
+2. [Primera Vez: Registro](#-primera-vez-registro)
+3. [Agendar una Cita](#-agendar-una-cita)
+4. [Esperar la Confirmación](#-esperar-la-confirmación)
+5. [El Día de la Cita](#-el-día-de-la-cita)
+6. [Llegada al Hospital](#-llegada-al-hospital)
+7. [En la Sala de Espera](#-en-la-sala-de-espera)
+8. [El Consultorio](#-el-consultorio)
+9. [Después de la Cita](#-después-de-la-cita)
+10. [Flujos Presenciales Especiales](#-flujos-presenciales-especiales)
+11. [Notificaciones Especiales](#-notificaciones-especiales)
+12. [Protocolo de Emergencias](#-protocolo-de-emergencias)
+13. [Situaciones Especiales en Recepción](#-situaciones-especiales-en-recepción)
+14. [Resumen: Diferencias Presencial vs Agendado](#-resumen-diferencias-presencial-vs-agendado)
+15. [Diagrama del Flujo Presencial Completo](#-diagrama-del-flujo-presencial-completo)
+16. [Pantallas/Vistas Utilizadas](#-pantallas-vistas-utilizadas-en-flujo-presencial)
+17. [Diferencias Clave: Presencial vs Agendado](#-diferencias-clave-presencial-vs-agendado)
+18. [Casos de Uso Específicos](#-casos-de-uso-especificos)
+19. [Resumen del Flujo Completo](#-resumen-del-flujo-completo)
+20. [El Flujo en Diagrama Simple](#-el-flujo-en-diagrama-simple)
+21. [Ejemplos de Mensajes](#-ejemplos-de-mensajes-que-recibe-el-paciente)
+22. [Puntos Clave del Sistema](#-puntos-clave-del-sistema)
+23. [Lo Más Importante](#-lo-mas-importante)
 
 ---
 
-## 🌟 El Inicio del Viaje del Paciente
+## 🌟 El Inicio del Viaje del Paciente {#-el-inicio-del-viaje-del-paciente}
 
 El flujo del sistema está diseñado para que un paciente pueda acceder a atención médica de dos formas:
 
@@ -74,7 +83,7 @@ FLUJO AGENDADO:                    FLUJO PRESENCIAL:
 
 ---
 
-## 🎯 Primera Vez: Registro
+## 🎯 Primera Vez: Registro {#-primera-vez-registro}
 
 ### Escena 1: El Paciente se Registra por Primera Vez
 
@@ -161,7 +170,7 @@ Juan es un paciente nuevo que necesita una consulta cardíaca. Por primera vez, 
 
 ---
 
-## 📅 Agendar una Cita
+## 📅 Agendar una Cita {#-agendar-una-cita}
 
 ### Escena 3: Juan Entra al Formulario de Agendar Cita
 
@@ -256,7 +265,7 @@ Juan es un paciente nuevo que necesita una consulta cardíaca. Por primera vez, 
 
 ---
 
-## ⏳ Esperar la Confirmación
+## ⏳ Esperar la Confirmación {#-esperar-la-confirmación}
 
 ### Escena 4: Juan Recibe la Oferta de Cupo
 
@@ -359,7 +368,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## 📅 El Día de la Cita
+## 📅 El Día de la Cita {#-el-día-de-la-cita}
 
 ### Escena 6: Recordatorios Automáticos
 
@@ -392,7 +401,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## 🏥 Llegada al Hospital
+## 🏥 Llegada al Hospital {#-llegada-al-hospital}
 
 ### Escena 7: Juan Llega a la Recepción
 
@@ -439,7 +448,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## ⏱️ En la Sala de Espera
+## ⏱️ En la Sala de Espera {#-en-la-sala-de-espera}
 
 ### Escena 8: Juan Espera su Turno
 
@@ -482,7 +491,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## 🩺 El Consultorio
+## 🩺 El Consultorio {#-el-consultorio}
 
 ### Escena 9: El Dr. García Llama a Juan
 
@@ -597,7 +606,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## 📝 Después de la Cita
+## 📝 Después de la Cita {#-después-de-la-cita}
 
 ### Escena 10: Juan Sale del Consultorio
 
@@ -683,7 +692,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## 🏥 Flujos Presenciales Especiales
+## 🏥 Flujos Presenciales Especiales {#-flujos-presenciales-especiales}
 
 ### Flujo A: Triage en Recepción
 
@@ -776,7 +785,7 @@ El sistema **automáticamente** (sin intervención de humanos) hace lo siguiente
 
 ---
 
-## 📱 Notificaciones Especiales
+## 📱 Notificaciones Especiales {#-notificaciones-especiales}
 
 ### Para Pacientes Presenciales en Espera
 
@@ -814,7 +823,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 🚑 Protocolo de Emergencias
+## 🚑 Protocolo de Emergencias {#-protocolo-de-emergencias}
 
 ### Si llega Paciente en Estado Crítico
 
@@ -845,7 +854,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 📊 Situaciones Especiales en Recepción
+## 📊 Situaciones Especiales en Recepción {#-situaciones-especiales-en-recepción}
 
 ### Paciente Llega Acompañado (Menor o Incapaz)
 
@@ -909,7 +918,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## ✅ Resumen: Diferencias Presencial vs Agendado
+## ✅ Resumen: Diferencias Presencial vs Agendado {#-resumen-diferencias-presencial-vs-agendado}
 
 | Aspecto | AGENDADO PREVIAMENTE | PRESENCIAL SIN CITA |
 |--------|----------------------|-------------------|
@@ -1272,7 +1281,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 📊 Diagrama del Flujo Presencial Completo
+## 📊 Diagrama del Flujo Presencial Completo {#-diagrama-del-flujo-presencial-completo}
 
 ```
 ┌─────────────────────────────────────┐
@@ -1367,7 +1376,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 🖥️ Pantallas/Vistas Utilizadas en Flujo Presencial
+## 🖥️ Pantallas/Vistas Utilizadas en Flujo Presencial {#-pantallas-vistas-utilizadas-en-flujo-presencial}
 
 | Módulo | Pantalla | Archivo | Función |
 |--------|----------|---------|---------|
@@ -1381,7 +1390,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 🔑 Diferencias Clave: Presencial vs Agendado
+## 🔑 Diferencias Clave: Presencial vs Agendado {#-diferencias-clave-presencial-vs-agendado}
 
 | Aspecto | AGENDADO | PRESENCIAL |
 |--------|----------|-----------|
@@ -1497,7 +1506,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 📊 Casos de Uso Específicos
+## 📊 Casos de Uso Específicos {#-casos-de-uso-especificos}
 
 ### CASO 5: Consulta Virtual (Telemedicina)
 
@@ -1654,7 +1663,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## ✅ Resumen del Flujo Completo
+## ✅ Resumen del Flujo Completo {#-resumen-del-flujo-completo}
 
 **Paso a Paso, lo que ve el paciente:**
 
@@ -1721,7 +1730,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 🔄 El Flujo en Diagrama Simple
+## 🔄 El Flujo en Diagrama Simple {#-el-flujo-en-diagrama-simple}
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -1803,7 +1812,7 @@ con la Dra. López (mismo especialista).
 
 ---
 
-## 🎭 Ejemplos de Mensajes que Recibe el Paciente
+## 🎭 Ejemplos de Mensajes que Recibe el Paciente {#-ejemplos-de-mensajes-que-recibe-el-paciente}
 
 ### Email 1: Oferta de Cupo
 ```
@@ -1870,7 +1879,7 @@ Responde: www.hospital.com/encuesta
 
 ---
 
-## 📌 Puntos Clave del Sistema
+## 📌 Puntos Clave del Sistema {#-puntos-clave-del-sistema}
 
 ✅ **Automatización:** El sistema automáticamente ordena pacientes por prioridad
 
@@ -1890,7 +1899,7 @@ Responde: www.hospital.com/encuesta
 
 ---
 
-## 🎯 Lo Más Importante
+## 🎯 Lo Más Importante {#-lo-mas-importante}
 
 El paciente **nunca tiene que preocuparse** por:
 - Llamar para agendar
